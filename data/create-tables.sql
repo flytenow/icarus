@@ -31,7 +31,10 @@ CREATE TABLE `events-faa` (
 LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa` 
   FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n' 
   IGNORE 1 LINES
-  (`asdf`)
+  (@reportNumber, @date, @city, @state, @airport, @eventType, @aircraftDamage, @flightPhase, @aircraftMake,
+   @aircraftModel, @aircraftSeries, @operator, @primaryFlightType, @flightConductCode, @flightPlanFiledCode,
+   @aircraftRegNumber, @fatalities, @injuries, @engineMake, @engineModel, @engineGroupCode, @engineCount,
+   @pilotCertification, @pilotTotalHours, @pilotMakeModelHours)
   SET
     `report-number` = TRIM(NULLIF(@reportNumber, '')),
     `date` = TRIM(NULLIF(@date, '')),
@@ -40,13 +43,28 @@ LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
     `airport` = TRIM(NULLIF(@airport, '')),
     `event-type` = TRIM(NULLIF(@eventType, '')),
     `aircraft-damage` = TRIM(NULLIF(@aircraftDamage, '')),
-    `flight-phase` = TRIM(NULLIF(@flightPhase), ''),
-    `aircraft-make` = TRIM(NULLIF(@aircraftMake, ''),
-
+    `flight-phase` = TRIM(NULLIF(@flightPhase, '')),
+    `aircraft-make` = TRIM(NULLIF(@aircraftMake, '')),
+    `aircraft-model` = TRIM(NULLIF(@aircraftModel, '')),
+    `aircraft-series` = TRIM(NULLIF(@aircraftSeries, '')),
+    `operator` = TRIM(NULLIF(@operator, '')),
+    `primary-flight-type` = TRIM(NULLIF(@primaryFlightType, '')),
+    `flight-conduct-code` = TRIM(NULLIF(@flightConductCode, '')),
+    `flight-plan-filed-code` = TRIM(NULLIF(@flightPlanFiledCode, '')),
+    `aircraft-reg-number` = TRIM(NULLIF(@aircraftRegNumber, '')),
+    `fatalities` = TRIM(NULLIF(@fatalities, '')),
+    `injuries` = TRIM(NULLIF(@injuries, '')),
+    `engine-make` = TRIM(NULLIF(@engineMake, '')),
+    `engine-model` = TRIM(NULLIF(@engineModel, '')),
+    `engine-group-code` = TRIM(NULLIF(@engineGroupCode, '')),
+    `engine-count` = TRIM(NULLIF(@engineCount, '')),
+    `pilot-certification` = TRIM(NULLIF(@pilotCertification, '')),
+    `pilot-total-hours` = TRIM(NULLIF(@pilotTotalHours, '')),
+    `pilot-make-model-hours` = TRIM(NULLIF(@pilotMakeModelHours, ''));
 
 DROP TABLE IF EXISTS `events-ntsb`;
 CREATE TABLE `events-ntsb` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL AUTO_INCREMENT UNIQUE,
   `event-id` VARCHAR(16) NOT NULL,
   `investigation-type` VARCHAR(10) NOT NULL,
   `accident-number` VARCHAR(16) NOT NULL,
@@ -121,4 +139,3 @@ LOAD DATA INFILE '/tmp/ntsb.txt' INTO TABLE `events-ntsb`
     `broad-flight-phase` = TRIM(NULLIF(@broadFlightPhase, '')),
     `report-status` = TRIM(NULLIF(@reportStatus, '')),
     `publication-date` = TRIM(NULLIF(@publicationDate, ''));
-

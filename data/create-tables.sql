@@ -28,7 +28,21 @@ CREATE TABLE `events-faa` (
   PRIMARY KEY (`report-number`)
 ) ENGINE = MyISAM DEFAULT CHARSET = utf8;
 
-LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa` FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n' IGNORE 1 LINES;
+LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa` 
+  FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n' 
+  IGNORE 1 LINES
+  (`asdf`)
+  SET
+    `report-number` = TRIM(NULLIF(@reportNumber, '')),
+    `date` = TRIM(NULLIF(@date, '')),
+    `city` = TRIM(NULLIF(@city, '')),
+    `state` = TRIM(NULLIF(@state, '')),
+    `airport` = TRIM(NULLIF(@airport, '')),
+    `event-type` = TRIM(NULLIF(@eventType, '')),
+    `aircraft-damage` = TRIM(NULLIF(@aircraftDamage, '')),
+    `flight-phase` = TRIM(NULLIF(@flightPhase), ''),
+    `aircraft-make` = TRIM(NULLIF(@aircraftMake, ''),
+
 
 DROP TABLE IF EXISTS `events-ntsb`;
 CREATE TABLE `events-ntsb` (

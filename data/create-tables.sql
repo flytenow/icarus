@@ -24,7 +24,7 @@ CREATE TABLE `events-faa` (
   `engine-count` INT DEFAULT NULL,
   `pilot-certification` VARCHAR(64) DEFAULT NULL,
   `pilot-total-hours` INT DEFAULT NULL,
-  `Pilot-make-model-hours` INT DEFAULT NULL,
+  `pilot-make-model-hours` INT DEFAULT NULL,
   PRIMARY KEY (`report-number`)
 ) ENGINE = MyISAM DEFAULT CHARSET = utf8;
 

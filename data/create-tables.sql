@@ -1,3 +1,4 @@
+# FAA
 DROP TABLE IF EXISTS `events-faa`;
 CREATE TABLE `events-faa` (
   `report-number` VARCHAR(16) NOT NULL UNIQUE,
@@ -37,7 +38,7 @@ LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
    @pilotCertification, @pilotTotalHours, @pilotMakeModelHours)
   SET
     `report-number` = TRIM(NULLIF(@reportNumber, '')),
-    `date` = TRIM(NULLIF(@date, '')),
+    `date` = DATE_FORMAT(STR_TO_DATE(CONCAT(UCASE(LEFT(TRIM(NULLIF(@date, '')), 4)), LCASE(SUBSTRING(TRIM(NULLIF(@date, '')), 5))), '%d-%b-%y'), '%Y-%m-%d'),
     `city` = TRIM(NULLIF(@city, '')),
     `state` = TRIM(NULLIF(@state, '')),
     `airport` = TRIM(NULLIF(@airport, '')),
@@ -51,7 +52,7 @@ LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
     `primary-flight-type` = TRIM(NULLIF(@primaryFlightType, '')),
     `flight-conduct-code` = TRIM(NULLIF(@flightConductCode, '')),
     `flight-plan-filed-code` = TRIM(NULLIF(@flightPlanFiledCode, '')),
-    `aircraft-reg-number` = TRIM(NULLIF(@aircraftRegNumber, '')),
+    `aircraft-reg-number` = CONCAT('N', TRIM(NULLIF(@aircraftRegNumber, ''))),
     `fatalities` = TRIM(NULLIF(@fatalities, '')),
     `injuries` = TRIM(NULLIF(@injuries, '')),
     `engine-make` = TRIM(NULLIF(@engineMake, '')),
@@ -62,6 +63,7 @@ LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
     `pilot-total-hours` = TRIM(NULLIF(@pilotTotalHours, '')),
     `pilot-make-model-hours` = TRIM(NULLIF(@pilotMakeModelHours, ''));
 
+# NTSB
 DROP TABLE IF EXISTS `events-ntsb`;
 CREATE TABLE `events-ntsb` (
   `id` INT NOT NULL AUTO_INCREMENT UNIQUE,
@@ -111,7 +113,7 @@ LOAD DATA INFILE '/tmp/ntsb.txt' INTO TABLE `events-ntsb`
     `event-id` = TRIM(NULLIF(@eventId, '')),
     `investigation-type` = TRIM(NULLIF(@investigationType, '')),
     `accident-number` = TRIM(NULLIF(@accidentNumber, '')),
-    `event-date` = TRIM(NULLIF(@eventDate, '')),
+    `event-date` = DATE_FORMAT(STR_TO_DATE(TRIM(NULLIF(@eventDate, '')), '%m/%d/%Y'), '%Y-%m-%d'),
     `location` = TRIM(NULLIF(@location, '')),
     `country` = TRIM(NULLIF(@country, '')),
     `latitude` = TRIM(NULLIF(@latitude, '')),
@@ -139,3 +141,70 @@ LOAD DATA INFILE '/tmp/ntsb.txt' INTO TABLE `events-ntsb`
     `broad-flight-phase` = TRIM(NULLIF(@broadFlightPhase, '')),
     `report-status` = TRIM(NULLIF(@reportStatus, '')),
     `publication-date` = TRIM(NULLIF(@publicationDate, ''));
+
+# EVENTS
+DROP TABLE IF EXISTS `events`;
+CREATE TABLE `events` (
+  `id` INT NOT NULL AUTO_INCREMENT UNIQUE,
+  `source` VARCHAR(4) NOT NULL,
+  `investigation-type` VARCHAR(10) NOT NULL,
+  `report-status` VARCHAR(32) NOT NULL,
+  `date` VARCHAR(10) DEFAULT NULL,
+  `city` VARCHAR(32) DEFAULT NULL,
+  `state` VARCHAR(2) DEFAULT NULL,
+  `airport-name` VARCHAR(64) DEFAULT NULL,
+  `airport-code` VARCHAR(6) DEFAULT NULL,
+  `latitude` VARCHAR(16) DEFAULT NULL,
+  `longitude` VARCHAR(16) DEFAULT NULL,
+  `fatalities` INT DEFAULT NULL,
+  `injuries` INT DEFAULT NULL,
+  `uninjured` INT DEFAULT NULL,
+  `aircraft-reg-number` VARCHAR(16) DEFAULT NULL,
+  `aircraft-category` VARCHAR(16) DEFAULT NULL,
+  `aircraft-make` VARCHAR(64) DEFAULT NULL,
+  `aircraft-model` VARCHAR(64) DEFAULT NULL,
+  `aircraft-series` VARCHAR(64) DEFAULT NULL,
+  `amateur-built` VARCHAR(3) DEFAULT NULL,
+  `engine-count` INT DEFAULT NULL,
+  `engine-type` VARCHAR(32) DEFAULT NULL,
+  `aircraft-damage` VARCHAR(32) DEFAULT NULL,
+  `operator` VARCHAR(128) DEFAULT NULL,
+  `far-desc` VARCHAR(64) DEFAULT NULL,
+  `pilot-certification` VARCHAR(64) DEFAULT NULL,
+  `pilot-total-hours` INT DEFAULT NULL,
+  `pilot-make-model-hours` INT DEFAULT NULL,
+  `flight-phase` VARCHAR(128) DEFAULT NULL,
+  `flight-type` VARCHAR(128) DEFAULT NULL,
+  `flight-plan-filed-code` VARCHAR(64) DEFAULT NULL,
+  `weather-conditions` VARCHAR(3) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE = MyISAM DEFAULT CHARSET = utf8;
+
+# FAA
+INSERT INTO `events`
+  (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
+   `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
+   `aircraft-make`, `aircraft-model`, `aircraft-series`, `amateur-built`, `engine-count`, `engine-type`,
+   `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`, 
+   `flight-phase`, `flight-type`, `flight-plan-filed-code`, `weather-conditions`)
+  SELECT 'FAA', `event-type`, NULL, `date`, `city`, `state`, `airport`, NULL, NULL, NULL, `fatalities`,
+         `injuries`, NULL, `aircraft-reg-number`, NULL, `aircraft-make`, `aircraft-model`, `aircraft-series`, 
+         NULL, `engine-count`, NULL, `aircraft-damage`, `operator`, `flight-conduct-code`, `pilot-certification`, 
+         `pilot-total-hours`, `pilot-make-model-hours`, `flight-phase`, `primary-flight-type`,
+         `flight-plan-filed-code`, NULL
+    FROM `events-faa`
+    ORDER BY `report-number` ASC;
+
+#NTSB
+INSERT INTO `events`
+  (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
+   `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
+   `aircraft-make`, `aircraft-model`, `aircraft-series`, `amateur-built`, `engine-count`, `engine-type`,
+   `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`, 
+   `flight-phase`, `flight-type`, `flight-plan-filed-code`, `weather-conditions`)
+  SELECT 'NTSB', `investigation-type`, `report-status`, `event-date`, NULL, NULL, `airport-name`, `airport-code`,
+        `latitude`, `longitude`, `injuries-fatal`, NULL, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
+        `aircraft-make`, `aircraft-model`, NULL, `amateur-built`, `engine-count`, `engine-type`, `aircraft-damage`,
+        `air-carrier`, `far-desc`, NULL, NULL,NULL , `broad-flight-phase`, `flight-purpose`, NULL, `weather-conditions`
+    FROM `events-ntsb`
+    ORDER BY `id` ASC;

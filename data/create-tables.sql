@@ -1,13 +1,32 @@
 # Returns a word with the first letter capitalized.
 DROP FUNCTION IF EXISTS WordCase;
 DELIMITER $$
-CREATE FUNCTION WordCase(string VARCHAR(255)) RETURNS VARCHAR(255)
+CREATE FUNCTION WordCase (input VARCHAR(255))
+  RETURNS VARCHAR(255)
   DETERMINISTIC
-BEGIN
-  DECLARE result VARCHAR(255);
-  SET result = CONCAT(UCASE(LEFT(TRIM(NULLIF(string, '')), 1)), LCASE(SUBSTRING(TRIM(NULLIF(string, '')), 2)));
-  RETURN result;
-END;
+  BEGIN
+    DECLARE length INT;
+    DECLARE iter INT;
+
+    SET length = CHAR_LENGTH(input);
+    SET input = LOWER(input);
+    SET iter = 0;
+
+    WHILE(iter < length) DO
+      IF(MID(input, iter, 1) = ' ' OR MID(input, iter, 1) = '-' OR iter = 0) THEN
+        IF(iter < length) THEN
+          SET input = CONCAT(
+              LEFT(input, iter),
+              UPPER(MID(input, iter + 1, 1)),
+              RIGHT(input, length - iter - 1)
+          );
+        END IF;
+      END IF;
+      SET iter = iter + 1;
+    END WHILE;
+
+    RETURN input;
+  END;
 $$
 DELIMITER ;
 
@@ -42,8 +61,8 @@ CREATE TABLE `events-faa` (
   PRIMARY KEY (`report-number`)
 ) ENGINE = MyISAM DEFAULT CHARSET = utf8;
 
-LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa` 
-  FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n' 
+LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
+  FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n'
   IGNORE 1 LINES
   (@reportNumber, @date, @city, @state, @airport, @eventType, @aircraftDamage, @flightPhase, @aircraftMake,
    @aircraftModel, @aircraftSeries, @operator, @primaryFlightType, @flightConductCode, @flightPlanFiledCode,
@@ -65,7 +84,7 @@ LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
     `primary-flight-type` = TRIM(NULLIF(@primaryFlightType, '')),
     `flight-conduct-code` = TRIM(NULLIF(@flightConductCode, '')),
     `flight-plan-filed-code` = TRIM(NULLIF(@flightPlanFiledCode, '')),
-    `aircraft-reg-number` = CONCAT('N', TRIM(NULLIF(@aircraftRegNumber, ''))),
+    `aircraft-reg-number` = TRIM(NULLIF(@aircraftRegNumber, '')),
     `fatalities` = TRIM(NULLIF(@fatalities, '')),
     `injuries` = TRIM(NULLIF(@injuries, '')),
     `engine-make` = TRIM(NULLIF(@engineMake, '')),
@@ -155,6 +174,12 @@ LOAD DATA INFILE '/tmp/ntsb.txt' INTO TABLE `events-ntsb`
     `report-status` = TRIM(NULLIF(@reportStatus, '')),
     `publication-date` = TRIM(NULLIF(@publicationDate, ''));
 
+# Clean junk data.
+UPDATE `events-faa` SET `aircraft-reg-number` = NULL
+  WHERE `aircraft-reg-number` LIKE 'UN%' OR `aircraft-reg-number` LIKE 'NONE';
+UPDATE `events-ntsb` SET `aircraft-reg-number` = NULL
+WHERE `aircraft-reg-number` LIKE 'UN%' OR `aircraft-reg-number` LIKE 'NONE';
+
 # Create events table.
 DROP TABLE IF EXISTS `events`;
 CREATE TABLE `events` (
@@ -196,12 +221,12 @@ CREATE TABLE `events` (
 # Copy FAA data into events table.
 INSERT INTO `events`
   (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
-   `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
+   `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`,
    `aircraft-make`, `aircraft-model`, `aircraft-series`, `amateur-built`, `engine-count`, `engine-type`,
-   `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`, 
+   `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`,
    `flight-phase`, `flight-type`, `flight-plan-filed-code`, `weather-conditions`)
   SELECT 'FAA', # source
-         UCASE(`event-type`), # investigation-type 
+         UCASE(`event-type`), # investigation-type
          NULL, # report-status
          `date`, # date
          WordCase(`city`), # city
@@ -213,9 +238,9 @@ INSERT INTO `events`
          `fatalities`, # fatalities
          `injuries`, # injuries
          NULL, # uninjured
-         UCASE(`aircraft-reg-number`), # aircraft-reg-number
+         CONCAT('N', UCASE(`aircraft-reg-number`)), # aircraft-reg-number
          NULL, # aircraft-category
-         WordCase(`aircraft-make`), # aircraft-make 
+         WordCase(`aircraft-make`), # aircraft-make
          UCASE(`aircraft-model`), # aircraft-model
          UCASE(`aircraft-series`), # aircraft-series
          NULL, # amatuer-built
@@ -233,13 +258,14 @@ INSERT INTO `events`
          NULL # weather-conditions
     FROM `events-faa`
     ORDER BY `report-number` ASC;
+DROP TABLE `events-faa`;
 
 # Copy NTSB data into events table.
 INSERT INTO `events`
   (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
-   `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
+   `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`,
    `aircraft-make`, `aircraft-model`, `aircraft-series`, `amateur-built`, `engine-count`, `engine-type`,
-   `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`, 
+   `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`,
    `flight-phase`, `flight-type`, `flight-plan-filed-code`, `weather-conditions`)
   SELECT 'NTSB', # source
          UCASE(`investigation-type`), # investigation-type
@@ -259,12 +285,14 @@ INSERT INTO `events`
          WordCase(`aircraft-make`), # aircraft-make
          UCASE(`aircraft-model`), # aircraft-model
          NULL, # aircraft-series
-         UCASE(`amateur-built`), # amateur-built 
+         UCASE(`amateur-built`), # amateur-built
          `engine-count`, # engine-count
          WordCase(`engine-type`), # engine-type
          UCASE(`aircraft-damage`), # aircraft-damage
          WordCase(`air-carrier`), # operator
-         UCASE(`far-desc`), # far-desc
+         IF(INSTR(`far-desc`, ':') = 0, # far-desc
+            UCASE(`far-desc`),
+            TRIM(SUBSTRING(UCASE(`far-desc`) FROM INSTR(UCASE(`far-desc`), ':') + 2))),
          NULL, # pilot-certification
          NULL, # pilot-total-hours
          NULL, # pilot-make-model-hours
@@ -274,3 +302,16 @@ INSERT INTO `events`
          UCASE(`weather-conditions`) # weather-conditions
     FROM `events-ntsb`
     ORDER BY `id` ASC;
+DROP TABLE `events-ntsb`;
+
+# Select duplicate events.
+# SELECT * FROM events e
+# INNER JOIN (
+# SELECT `aircraft-reg-number`, date, COUNT(*)
+# FROM events
+# GROUP BY `aircraft-reg-number`, date
+# HAVING COUNT(*) > 1) temp
+# ON temp.`aircraft-reg-number` = e.`aircraft-reg-number`
+# AND temp.date = e.date
+# WHERE e.`aircraft-reg-number` <> 'NONE' AND e.`aircraft-reg-number` <> 'NNONE' AND e.`aircraft-reg-number` <> 'NUNKNO'
+# ORDER BY e.`aircraft-reg-number`, e.date;

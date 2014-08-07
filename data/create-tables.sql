@@ -1,4 +1,17 @@
-# FAA
+# Returns a word with the first letter capitalized.
+DROP FUNCTION IF EXISTS WordCase;
+DELIMITER $$
+CREATE FUNCTION WordCase(string VARCHAR(255)) RETURNS VARCHAR(255)
+  DETERMINISTIC
+BEGIN
+  DECLARE result VARCHAR(255);
+  SET result = CONCAT(UCASE(LEFT(TRIM(NULLIF(string, '')), 1)), LCASE(SUBSTRING(TRIM(NULLIF(string, '')), 2)));
+  RETURN result;
+END;
+$$
+DELIMITER ;
+
+# Create FAA events table and import data.
 DROP TABLE IF EXISTS `events-faa`;
 CREATE TABLE `events-faa` (
   `report-number` VARCHAR(16) NOT NULL UNIQUE,
@@ -63,7 +76,7 @@ LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
     `pilot-total-hours` = TRIM(NULLIF(@pilotTotalHours, '')),
     `pilot-make-model-hours` = TRIM(NULLIF(@pilotMakeModelHours, ''));
 
-# NTSB
+# Create NTSB table and import data.
 DROP TABLE IF EXISTS `events-ntsb`;
 CREATE TABLE `events-ntsb` (
   `id` INT NOT NULL AUTO_INCREMENT UNIQUE,
@@ -142,7 +155,7 @@ LOAD DATA INFILE '/tmp/ntsb.txt' INTO TABLE `events-ntsb`
     `report-status` = TRIM(NULLIF(@reportStatus, '')),
     `publication-date` = TRIM(NULLIF(@publicationDate, ''));
 
-# EVENTS
+# Create events table.
 DROP TABLE IF EXISTS `events`;
 CREATE TABLE `events` (
   `id` INT NOT NULL AUTO_INCREMENT UNIQUE,
@@ -180,31 +193,84 @@ CREATE TABLE `events` (
   PRIMARY KEY (`id`)
 ) ENGINE = MyISAM DEFAULT CHARSET = utf8;
 
-# FAA
+# Copy FAA data into events table.
 INSERT INTO `events`
   (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
    `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
    `aircraft-make`, `aircraft-model`, `aircraft-series`, `amateur-built`, `engine-count`, `engine-type`,
    `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`, 
    `flight-phase`, `flight-type`, `flight-plan-filed-code`, `weather-conditions`)
-  SELECT 'FAA', `event-type`, NULL, `date`, `city`, `state`, `airport`, NULL, NULL, NULL, `fatalities`,
-         `injuries`, NULL, `aircraft-reg-number`, NULL, `aircraft-make`, `aircraft-model`, `aircraft-series`, 
-         NULL, `engine-count`, NULL, `aircraft-damage`, `operator`, `flight-conduct-code`, `pilot-certification`, 
-         `pilot-total-hours`, `pilot-make-model-hours`, `flight-phase`, `primary-flight-type`,
-         `flight-plan-filed-code`, NULL
+  SELECT 'FAA', # source
+         UCASE(`event-type`), # investigation-type 
+         NULL, # report-status
+         `date`, # date
+         WordCase(`city`), # city
+         UCASE(`state`), # state
+         WordCase(`airport`), # airport-name
+         NULL, # airport-code
+         NULL, # latitude
+         NULL, # longitude
+         `fatalities`, # fatalities
+         `injuries`, # injuries
+         NULL, # uninjured
+         UCASE(`aircraft-reg-number`), # aircraft-reg-number
+         NULL, # aircraft-category
+         WordCase(`aircraft-make`), # aircraft-make 
+         UCASE(`aircraft-model`), # aircraft-model
+         UCASE(`aircraft-series`), # aircraft-series
+         NULL, # amatuer-built
+         `engine-count`, # engine-count
+         NULL, # engine-type
+         UCASE(`aircraft-damage`), # aircraft-damage
+         WordCase(`operator`), # operator
+         UCASE(`flight-conduct-code`), # far-desc
+         UCASE(`pilot-certification`), # pilot-certification
+         `pilot-total-hours`, # pilot-total-hours
+         `pilot-make-model-hours`, # pilot-make-model-hours
+         WordCase(`flight-phase`), # flight-phase
+         UCASE(`primary-flight-type`), # flight-type
+         UCASE(`flight-plan-filed-code`), # flight-plan-filed-code
+         NULL # weather-conditions
     FROM `events-faa`
     ORDER BY `report-number` ASC;
 
-#NTSB
+# Copy NTSB data into events table.
 INSERT INTO `events`
   (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
    `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
    `aircraft-make`, `aircraft-model`, `aircraft-series`, `amateur-built`, `engine-count`, `engine-type`,
    `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`, `pilot-total-hours`, `pilot-make-model-hours`, 
    `flight-phase`, `flight-type`, `flight-plan-filed-code`, `weather-conditions`)
-  SELECT 'NTSB', `investigation-type`, `report-status`, `event-date`, NULL, NULL, `airport-name`, `airport-code`,
-        `latitude`, `longitude`, `injuries-fatal`, NULL, `uninjured`, `aircraft-reg-number`, `aircraft-category`, 
-        `aircraft-make`, `aircraft-model`, NULL, `amateur-built`, `engine-count`, `engine-type`, `aircraft-damage`,
-        `air-carrier`, `far-desc`, NULL, NULL,NULL , `broad-flight-phase`, `flight-purpose`, NULL, `weather-conditions`
+  SELECT 'NTSB', # source
+         UCASE(`investigation-type`), # investigation-type
+         UCASE(`report-status`), # report-status
+         `event-date`, # date
+         NULL, # city
+         NULL, # state
+         WordCase(`airport-name`), # airport-name
+         UCASE(`airport-code`), # airport-code
+         `latitude`, # latitude
+         `longitude`, # longitude
+         `injuries-fatal`, # fatalities
+         (`injuries-serious` + `injuries-minor`), # injuries
+         `uninjured`, # uninjured
+         UCASE(`aircraft-reg-number`), # aircraft-reg-number
+         WordCase(`aircraft-category`), # aircraft-category
+         WordCase(`aircraft-make`), # aircraft-make
+         UCASE(`aircraft-model`), # aircraft-model
+         NULL, # aircraft-series
+         UCASE(`amateur-built`), # amateur-built 
+         `engine-count`, # engine-count
+         WordCase(`engine-type`), # engine-type
+         UCASE(`aircraft-damage`), # aircraft-damage
+         WordCase(`air-carrier`), # operator
+         UCASE(`far-desc`), # far-desc
+         NULL, # pilot-certification
+         NULL, # pilot-total-hours
+         NULL, # pilot-make-model-hours
+         WordCase(`broad-flight-phase`), # flight-phase
+         UCASE(`flight-purpose`), # flight-type
+         NULL, # flight-plan-filed-code
+         UCASE(`weather-conditions`) # weather-conditions
     FROM `events-ntsb`
     ORDER BY `id` ASC;

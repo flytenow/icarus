@@ -1,0 +1,30 @@
+{
+  "name": "icarus",
+  "version": "0.1.0",
+  "description": "An interactive way to view aviation accident data in the United States.",
+  "homepage": "icarus.flytenow.com",
+  "contributors": [
+    "Andrew Mass <amass1212@gmail.com> (http://mass.red)"
+  ],
+  "license": "MIT",
+  "private": true,
+  "main": "server.js",
+  "engines": {
+    "node": "~0.10.25"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flytenow/icarus.git"
+  },
+  "bugs": {
+    "url": "https://github.com/flytenow/icarus/issues"
+  },
+  "dependencies": {
+    "express": "~4.7.0",
+    "ejs": "~1.0.0",
+    "lodash": "~2.4.1"
+  }
+}

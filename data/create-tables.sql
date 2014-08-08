@@ -28,6 +28,27 @@ CREATE FUNCTION WordCase(input VARCHAR(255)) RETURNS VARCHAR(255) DETERMINISTIC
 $$
 DELIMITER ;
 
+DROP FUNCTION IF EXISTS ChooseBetter;
+DELIMITER $$
+CREATE FUNCTION ChooseBetter(`left` VARCHAR(255), `right` VARCHAR(255)) RETURNS VARCHAR(255) DETERMINISTIC
+  BEGIN
+    IF `left` IS NULL THEN
+      IF `right` IS NULL THEN
+        RETURN NULL;
+      ELSE
+        RETURN `right`;
+      END IF;
+    ELSE
+      IF `right` IS NULL THEN
+        RETURN `left`;
+      ELSE
+        RETURN `left`;
+      END IF;
+    END IF;
+  END;
+$$
+DELIMITER ;
+
 # Attempts to merge duplicate entries.
 DROP PROCEDURE IF EXISTS MergeEvents;
 DELIMITER $$
@@ -59,7 +80,66 @@ CREATE PROCEDURE MergeEvents() DETERMINISTIC
         LEAVE processDup;
       END IF;
 
-      SELECT `left`, `right`;
+      SET @investigationType = ChooseBetter((SELECT `investigation-type` FROM events WHERE `id` = `left`),
+                                            (SELECT `investigation-type` FROM events WHERE `id` = `right`));
+      SET @reportStatus = ChooseBetter((SELECT `report-status` FROM events WHERE `id` = `left`),
+                                       (SELECT `report-status` FROM events WHERE `id` = `right`));
+      SET @date = ChooseBetter((SELECT `date` FROM events WHERE `id` = `left`),
+                               (SELECT `date` FROM events WHERE `id` = `right`));
+      SET @city = ChooseBetter((SELECT `city` FROM events WHERE `id` = `left`),
+                               (SELECT `city` FROM events WHERE `id` = `right`));
+      SET @state = ChooseBetter((SELECT `state` FROM events WHERE `id` = `left`),
+                                (SELECT `state` FROM events WHERE `id` = `right`));
+      SET @airportName = ChooseBetter((SELECT `airport-name` FROM events WHERE `id` = `left`),
+                                      (SELECT `airport-name` FROM events WHERE `id` = `right`));
+      SET @airportCode = ChooseBetter((SELECT `airport-code` FROM events WHERE `id` = `left`),
+                                      (SELECT `airport-code` FROM events WHERE `id` = `right`));
+      SET @latitude = ChooseBetter((SELECT `latitude` FROM events WHERE `id` = `left`),
+                                   (SELECT `latitude` FROM events WHERE `id` = `right`));
+      SET @longitude = ChooseBetter((SELECT `longitude` FROM events WHERE `id` = `left`),
+                                    (SELECT `longitude` FROM events WHERE `id` = `right`));
+      SET @fatalities = ChooseBetter((SELECT `fatalities` FROM events WHERE `id` = `left`),
+                                     (SELECT `fatalities` FROM events WHERE `id` = `right`));
+      SET @injuries = ChooseBetter((SELECT `injuries` FROM events WHERE `id` = `left`),
+                                   (SELECT `injuries` FROM events WHERE `id` = `right`));
+      SET @uninjured = ChooseBetter((SELECT `uninjured` FROM events WHERE `id` = `left`),
+                                    (SELECT `uninjured` FROM events WHERE `id` = `right`));
+      SET @aircraftRegNumber = ChooseBetter((SELECT `aircraft-reg-number` FROM events WHERE `id` = `left`),
+                                            (SELECT `aircraft-reg-number` FROM events WHERE `id` = `right`));
+      SET @aircraftCategory = ChooseBetter((SELECT `aircraft-category` FROM events WHERE `id` = `left`),
+                                           (SELECT `aircraft-category` FROM events WHERE `id` = `right`));
+      SET @aircraftMake = ChooseBetter((SELECT `aircraft-make` FROM events WHERE `id` = `left`),
+                                       (SELECT `aircraft-make` FROM events WHERE `id` = `right`));
+      SET @aircraftModel = ChooseBetter((SELECT `aircraft-model` FROM events WHERE `id` = `left`),
+                                        (SELECT `aircraft-model` FROM events WHERE `id` = `right`));
+      SET @aircraftSeries = ChooseBetter((SELECT `aircraft-series` FROM events WHERE `id` = `left`),
+                                         (SELECT `aircraft-series` FROM events WHERE `id` = `right`));
+      SET @amateurBuilt = ChooseBetter((SELECT `amateur-built` FROM events WHERE `id` = `left`),
+                                       (SELECT `amateur-built` FROM events WHERE `id` = `right`));
+      SET @engineCount = ChooseBetter((SELECT `engine-count` FROM events WHERE `id` = `left`),
+                                      (SELECT `engine-count` FROM events WHERE `id` = `right`));
+      SET @engineType = ChooseBetter((SELECT `engine-type` FROM events WHERE `id` = `left`),
+                                     (SELECT `engine-type` FROM events WHERE `id` = `right`));
+      SET @aircraftDamage = ChooseBetter((SELECT `aircraft-damage` FROM events WHERE `id` = `left`),
+                                         (SELECT `aircraft-damage` FROM events WHERE `id` = `right`));
+      SET @operator = ChooseBetter((SELECT `operator` FROM events WHERE `id` = `left`),
+                                   (SELECT `operator` FROM events WHERE `id` = `right`));
+      SET @farDesc = ChooseBetter((SELECT `far-desc` FROM events WHERE `id` = `left`),
+                                  (SELECT `far-desc` FROM events WHERE `id` = `right`));
+      SET @pilotCertification = ChooseBetter((SELECT `pilot-certification` FROM events WHERE `id` = `left`),
+                                             (SELECT `pilot-certification` FROM events WHERE `id` = `right`));
+      SET @pilotTotalHours = ChooseBetter((SELECT `pilot-total-hours` FROM events WHERE `id` = `left`),
+                                          (SELECT `pilot-total-hours` FROM events WHERE `id` = `right`));
+      SET @pilotMakeModelHours = ChooseBetter((SELECT `pilot-make-model-hours` FROM events WHERE `id` = `left`),
+                                              (SELECT `pilot-make-model-hours` FROM events WHERE `id` = `right`));
+      SET @flightPhase = ChooseBetter((SELECT `flight-phase` FROM events WHERE `id` = `left`),
+                                      (SELECT `flight-phase` FROM events WHERE `id` = `right`));
+      SET @flightType = ChooseBetter((SELECT `flight-type` FROM events WHERE `id` = `left`),
+                                     (SELECT `flight-type` FROM events WHERE `id` = `right`));
+      SET @flightPlanFiledCode = ChooseBetter((SELECT `flight-plan-filed-code` FROM events WHERE `id` = `left`),
+                                              (SELECT `flight-plan-filed-code` FROM events WHERE `id` = `right`));
+      SET @weatherConditions = ChooseBetter((SELECT `weather-conditions` FROM events WHERE `id` = `left`),
+                                            (SELECT `weather-conditions` FROM events WHERE `id` = `right`));
 
       INSERT INTO `events`
       (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`,
@@ -74,6 +154,7 @@ CREATE PROCEDURE MergeEvents() DETERMINISTIC
               @farDesc, @pilotCertification, @pilotTotalHours, @pilotMakeModelHours, @flightPhase, @flightType,
               @flightPlanFiledCode, @weatherConditions);
 
+      DELETE FROM `events` WHERE `id` = `left` OR `id` = `right`;
     END LOOP processDup;
     CLOSE dupCursor;
   END;
@@ -370,4 +451,5 @@ INSERT INTO `events`
   ORDER BY `id` ASC;
 DROP TABLE `events-ntsb`;
 
+SELECT 'Merge Duplicate Events';
 CALL MergeEvents();

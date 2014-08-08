@@ -28,7 +28,60 @@ CREATE FUNCTION WordCase(input VARCHAR(255)) RETURNS VARCHAR(255) DETERMINISTIC
 $$
 DELIMITER ;
 
+# Attempts to merge duplicate entries.
+DROP PROCEDURE IF EXISTS MergeEvents;
+DELIMITER $$
+CREATE PROCEDURE MergeEvents() DETERMINISTIC
+  BEGIN
+    DECLARE v_finished INT DEFAULT 0;
+    DECLARE `left` INT DEFAULT 0;
+    DECLARE `right` INT DEFAULT 0;
+
+    DECLARE dupCursor CURSOR FOR
+      SELECT e.id, temp.id FROM events e
+        INNER JOIN (
+                     SELECT `id`, `aircraft-reg-number`, date, COUNT(*)
+                     FROM events
+                     GROUP BY `aircraft-reg-number`, date
+                     HAVING COUNT(*) > 1) temp
+          ON temp.`aircraft-reg-number` = e.`aircraft-reg-number` AND temp.date = e.date
+      WHERE e.id <> temp.id
+      ORDER BY e.`aircraft-reg-number`, e.date LIMIT 4;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_finished = 1;
+
+    OPEN dupCursor;
+
+    processDup: LOOP
+      FETCH dupCursor INTO `left`, `right`;
+
+      IF v_finished = 1 THEN
+        LEAVE processDup;
+      END IF;
+
+      SELECT `left`, `right`;
+
+      INSERT INTO `events`
+      (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`,
+       `airport-code`, `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`,
+       `aircraft-category`, `aircraft-make`, `aircraft-model`, `aircraft-series`, `amateur-built`,
+       `engine-count`, `engine-type`, `aircraft-damage`, `operator`, `far-desc`, `pilot-certification`,
+       `pilot-total-hours`, `pilot-make-model-hours`, `flight-phase`, `flight-type`, `flight-plan-filed-code`,
+       `weather-conditions`)
+      VALUES ('BOTH', @investigationType, @reportStatus, @date, @city, @state, @airportName, @airportCode, @latitude,
+              @longitude, @fatalities, @injuries, @uninjured, @aircraftRegNumber, @aircraftCategory, @aircraftMake,
+              @aircraftModel, @aircraftSeries, @amateurBuilt, @engineCount, @engineType, @aircraftDamage, @operator,
+              @farDesc, @pilotCertification, @pilotTotalHours, @pilotMakeModelHours, @flightPhase, @flightType,
+              @flightPlanFiledCode, @weatherConditions);
+
+    END LOOP processDup;
+    CLOSE dupCursor;
+  END;
+$$
+DELIMITER ;
+
 # Create FAA events table and import data.
+SELECT 'Importing FAA Data';
 DROP TABLE IF EXISTS `events-faa`;
 CREATE TABLE `events-faa` (
   `report-number` VARCHAR(16) NOT NULL UNIQUE,
@@ -36,7 +89,7 @@ CREATE TABLE `events-faa` (
   `city` VARCHAR(32) DEFAULT NULL,
   `state` VARCHAR(2) DEFAULT NULL,
   `airport` VARCHAR(64) DEFAULT NULL,
-  `event-type` VARCHAR(16) DEFAULT NULL,
+  `event-type` VARCHAR(16) NOT NULL,
   `aircraft-damage` VARCHAR(32) DEFAULT NULL,
   `flight-phase` VARCHAR(128) DEFAULT NULL,
   `aircraft-make` VARCHAR(64) DEFAULT NULL,
@@ -60,7 +113,7 @@ CREATE TABLE `events-faa` (
 ) ENGINE = MyISAM DEFAULT CHARSET = utf8;
 
 LOAD DATA INFILE '/tmp/faa.txt' INTO TABLE `events-faa`
-FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n' IGNORE 1 LINES
+FIELDS TERMINATED BY ',' ENCLOSED BY '"' LINES TERMINATED BY '\n' IGNORE 2 LINES
 (@reportNumber, @date, @city, @state, @airport, @eventType, @aircraftDamage, @flightPhase, @aircraftMake,
  @aircraftModel, @aircraftSeries, @operator, @primaryFlightType, @flightConductCode, @flightPlanFiledCode,
  @aircraftRegNumber, @fatalities, @injuries, @engineMake, @engineModel, @engineGroupCode, @engineCount,
@@ -94,6 +147,7 @@ SET
   `pilot-make-model-hours` = TRIM(NULLIF(@pilotMakeModelHours, ''));
 
 # Create NTSB table and import data.
+SELECT 'Importing NTSB Data';
 DROP TABLE IF EXISTS `events-ntsb`;
 CREATE TABLE `events-ntsb` (
   `id` INT NOT NULL AUTO_INCREMENT UNIQUE,
@@ -173,10 +227,21 @@ SET
   `publication-date` = TRIM(NULLIF(@publicationDate, ''));
 
 # Clean junk data.
+SELECT 'Clean Junk Data';
 UPDATE `events-faa` SET `aircraft-reg-number` = NULL
 WHERE `aircraft-reg-number` LIKE 'UN%' OR `aircraft-reg-number` LIKE 'NONE';
 UPDATE `events-ntsb` SET `aircraft-reg-number` = NULL
 WHERE `aircraft-reg-number` LIKE 'UN%' OR `aircraft-reg-number` LIKE 'NONE';
+SET @deleted = 0;
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-faa` WHERE `event-type` IS NULL OR `event-type` = '');
+DELETE FROM `events-faa` WHERE `event-type` IS NULL OR `event-type` = '';
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `report-status` = 'PRELIMINARY');
+DELETE FROM `events-ntsb` WHERE `report-status` = 'PRELIMINARY';
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `event-date` IS NULL);
+DELETE FROM `events-ntsb` WHERE `event-date` IS NULL;
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-faa` WHERE `date` IS NULL);
+DELETE FROM `events-faa` WHERE `date` IS NULL;
+SELECT CONCAT(CONCAT('Deleted ', @deleted), ' Rows');
 
 # Create events table.
 DROP TABLE IF EXISTS `events`;
@@ -184,7 +249,7 @@ CREATE TABLE `events` (
   `id` INT NOT NULL AUTO_INCREMENT UNIQUE,
   `source` VARCHAR(4) NOT NULL,
   `investigation-type` VARCHAR(10) NOT NULL,
-  `report-status` VARCHAR(32) NOT NULL,
+  `report-status` VARCHAR(32) DEFAULT NULL,
   `date` VARCHAR(10) DEFAULT NULL,
   `city` VARCHAR(32) DEFAULT NULL,
   `state` VARCHAR(2) DEFAULT NULL,
@@ -217,6 +282,7 @@ CREATE TABLE `events` (
 ) ENGINE = MyISAM DEFAULT CHARSET = utf8;
 
 # Copy FAA data into events table.
+SELECT 'Import FAA Data into Events';
 INSERT INTO `events`
 (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
  `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`,
@@ -236,12 +302,13 @@ INSERT INTO `events`
     `fatalities`, # fatalities
     `injuries`, # injuries
     NULL, # uninjured
-    CONCAT('N', UCASE(`aircraft-reg-number`)), # aircraft-reg-number
+    IF(`aircraft-reg-number` REGEXP '^[1-9][0-9]{0,4}$|^[1-9][0-9]{0,3}[A-HJ-NP-Z]$|^[1-9][0-9]{0,2}[A-HJ-NP-Z]{2}$',
+       CONCAT('N', UCASE(`aircraft-reg-number`)), UCASE(`aircraft-reg-number`)), # aircraft-reg-number
     NULL, # aircraft-category
     WordCase(`aircraft-make`), # aircraft-make
     UCASE(`aircraft-model`), # aircraft-model
     UCASE(`aircraft-series`), # aircraft-series
-    NULL, # amatuer-built
+    NULL, # amateur-built
     `engine-count`, # engine-count
     NULL, # engine-type
     UCASE(`aircraft-damage`), # aircraft-damage
@@ -252,13 +319,14 @@ INSERT INTO `events`
     `pilot-make-model-hours`, # pilot-make-model-hours
     WordCase(`flight-phase`), # flight-phase
     UCASE(`primary-flight-type`), # flight-type
-    UCASE(`flight-plan-filed-code`), # flight-plan-filed-code
+    NULLIF(UCASE(`flight-plan-filed-code`), 'UNKNOWN'), # flight-plan-filed-code
     NULL # weather-conditions
   FROM `events-faa`
   ORDER BY `report-number` ASC;
 DROP TABLE `events-faa`;
 
 # Copy NTSB data into events table.
+SELECT 'Import NTSB Data into Events';
 INSERT INTO `events`
 (`source`, `investigation-type`, `report-status`, `date`, `city`, `state`, `airport-name`, `airport-code`,
  `latitude`, `longitude`, `fatalities`, `injuries`, `uninjured`, `aircraft-reg-number`, `aircraft-category`,
@@ -302,14 +370,4 @@ INSERT INTO `events`
   ORDER BY `id` ASC;
 DROP TABLE `events-ntsb`;
 
-# Select duplicate events.
-# SELECT * FROM events e
-# INNER JOIN (
-# SELECT `aircraft-reg-number`, date, COUNT(*)
-# FROM events
-# GROUP BY `aircraft-reg-number`, date
-# HAVING COUNT(*) > 1) temp
-# ON temp.`aircraft-reg-number` = e.`aircraft-reg-number`
-# AND temp.date = e.date
-# WHERE e.`aircraft-reg-number` <> 'NONE' AND e.`aircraft-reg-number` <> 'NNONE' AND e.`aircraft-reg-number` <> 'NUNKNO'
-# ORDER BY e.`aircraft-reg-number`, e.date;
+CALL MergeEvents();

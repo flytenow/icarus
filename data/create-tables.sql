@@ -42,7 +42,7 @@ CREATE FUNCTION ChooseBetter(`left` VARCHAR(255), `right` VARCHAR(255)) RETURNS 
       IF `right` IS NULL THEN
         RETURN `left`;
       ELSE
-        RETURN `left`;
+        RETURN IF(CHAR_LENGTH(`left`) > CHAR_LENGTH(`right`), `left`, `right`);
       END IF;
     END IF;
   END;
@@ -57,6 +57,7 @@ CREATE PROCEDURE MergeEvents() DETERMINISTIC
     DECLARE v_finished INT DEFAULT 0;
     DECLARE `left` INT DEFAULT 0;
     DECLARE `right` INT DEFAULT 0;
+    DECLARE count INT DEFAULT 0;
 
     DECLARE dupCursor CURSOR FOR
       SELECT e.id, temp.id FROM events e
@@ -67,7 +68,7 @@ CREATE PROCEDURE MergeEvents() DETERMINISTIC
                      HAVING COUNT(*) > 1) temp
           ON temp.`aircraft-reg-number` = e.`aircraft-reg-number` AND temp.date = e.date
       WHERE e.id <> temp.id
-      ORDER BY e.`aircraft-reg-number`, e.date LIMIT 4;
+      ORDER BY e.`aircraft-reg-number`, e.date;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_finished = 1;
 
@@ -155,8 +156,10 @@ CREATE PROCEDURE MergeEvents() DETERMINISTIC
               @flightPlanFiledCode, @weatherConditions);
 
       DELETE FROM `events` WHERE `id` = `left` OR `id` = `right`;
+      SET count = count + 1;
     END LOOP processDup;
     CLOSE dupCursor;
+    SELECT CONCAT(CONCAT('Merged ', count), ' Events');
   END;
 $$
 DELIMITER ;
@@ -399,7 +402,7 @@ INSERT INTO `events`
     `pilot-total-hours`, # pilot-total-hours
     `pilot-make-model-hours`, # pilot-make-model-hours
     WordCase(`flight-phase`), # flight-phase
-    UCASE(`primary-flight-type`), # flight-type
+    NULLIF(UCASE(`primary-flight-type`), 'UNKNOWN'), # flight-type
     NULLIF(UCASE(`flight-plan-filed-code`), 'UNKNOWN'), # flight-plan-filed-code
     NULL # weather-conditions
   FROM `events-faa`
@@ -444,7 +447,7 @@ INSERT INTO `events`
     NULL, # pilot-total-hours
     NULL, # pilot-make-model-hours
     WordCase(`broad-flight-phase`), # flight-phase
-    UCASE(`flight-purpose`), # flight-type
+    NULLIF(UCASE(`flight-purpose`), 'UNKNOWN'), # flight-type
     NULL, # flight-plan-filed-code
     UCASE(`weather-conditions`) # weather-conditions
   FROM `events-ntsb`

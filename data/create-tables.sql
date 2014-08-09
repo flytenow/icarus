@@ -164,6 +164,8 @@ CREATE PROCEDURE MergeEvents() DETERMINISTIC
 $$
 DELIMITER ;
 
+SET @deleted = 0;
+
 # Create FAA events table and import data.
 SELECT 'Importing FAA Data';
 DROP TABLE IF EXISTS `events-faa`;
@@ -229,6 +231,9 @@ SET
   `pilot-certification` = TRIM(NULLIF(@pilotCertification, '')),
   `pilot-total-hours` = TRIM(NULLIF(@pilotTotalHours, '')),
   `pilot-make-model-hours` = TRIM(NULLIF(@pilotMakeModelHours, ''));
+
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-faa` WHERE `event-type` IS NULL OR `event-type` = '');
+DELETE FROM `events-faa` WHERE `event-type` IS NULL OR `event-type` = '';
 
 # Create NTSB table and import data.
 SELECT 'Importing NTSB Data';
@@ -310,35 +315,24 @@ SET
   `report-status` = TRIM(NULLIF(@reportStatus, '')),
   `publication-date` = TRIM(NULLIF(@publicationDate, ''));
 
-# Clean junk data.
-SELECT 'Clean Junk Data';
-UPDATE `events-faa` SET `aircraft-reg-number` = NULL
-WHERE `aircraft-reg-number` LIKE 'UN%' OR `aircraft-reg-number` LIKE 'NONE';
-UPDATE `events-ntsb` SET `aircraft-reg-number` = NULL
-WHERE `aircraft-reg-number` LIKE 'UN%' OR `aircraft-reg-number` LIKE 'NONE';
-SET @deleted = 0;
-SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-faa` WHERE `event-type` IS NULL OR `event-type` = '');
-DELETE FROM `events-faa` WHERE `event-type` IS NULL OR `event-type` = '';
 SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `report-status` = 'PRELIMINARY');
 DELETE FROM `events-ntsb` WHERE `report-status` = 'PRELIMINARY';
-SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `event-date` IS NULL);
-DELETE FROM `events-ntsb` WHERE `event-date` IS NULL;
-SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-faa` WHERE `date` IS NULL);
-DELETE FROM `events-faa` WHERE `date` IS NULL;
+
 SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `event-date` LIKE '1948%'
     OR `event-date` LIKE '1962%' OR `event-date` LIKE '1974%' OR `event-date` LIKE '1977%');
 DELETE FROM `events-ntsb` WHERE `event-date` LIKE '1948%' OR `event-date` LIKE '1962%'
     OR `event-date` LIKE '1974%' OR `event-date` LIKE '1977%';
+
 SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `country` <> 'United States'
     OR `country` IS NULL);
 DELETE FROM `events-ntsb` WHERE `country` <> 'United States' OR `country` IS NULL;
+
 SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `location` LIKE '%, FN'
     OR `location` LIKE '%, AO' OR `location` LIKE '%, PO' OR `location` LIKE '%, UN'
     OR `location` LIKE '%, SI' OR `location` LIKE '%, HO');
 DELETE FROM `events-ntsb` WHERE `location` LIKE '%, FN'
     OR `location` LIKE '%, AO' OR `location` LIKE '%, PO' OR `location` LIKE '%, UN'
     OR `location` LIKE '%, SI' OR `location` LIKE '%, HO';
-SELECT CONCAT(CONCAT('Deleted ', @deleted), ' Rows');
 
 UPDATE `events-ntsb` SET `injuries-fatal` = IFNULL(`injuries-fatal`, 0),
   `injuries-serious` = IFNULL(`injuries-serious`, 0), `injuries-minor` = IFNULL(`injuries-minor`, 0),
@@ -476,6 +470,14 @@ INSERT INTO `events`
   FROM `events-ntsb`
   ORDER BY `id` ASC;
 DROP TABLE `events-ntsb`;
+
+# Clean remaining junk data.
+SELECT 'Clean Junk Data';
+UPDATE `events` SET `aircraft-reg-number` = NULL WHERE `aircraft-reg-number` LIKE 'UN%'
+    OR `aircraft-reg-number` LIKE 'NONE';
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events` WHERE `date` IS NULL);
+DELETE FROM `events` WHERE `date` IS NULL;
+SELECT CONCAT(CONCAT('Deleted ', @deleted), ' Rows');
 
 SELECT 'Merge Duplicate Events';
 CALL MergeEvents();

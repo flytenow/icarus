@@ -282,7 +282,7 @@ SET
   `investigation-type` = TRIM(NULLIF(@investigationType, '')),
   `accident-number` = TRIM(NULLIF(@accidentNumber, '')),
   `event-date` = DATE_FORMAT(STR_TO_DATE(TRIM(NULLIF(@eventDate, '')), '%m/%d/%Y'), '%Y-%m-%d'),
-  `location` = TRIM(NULLIF(@location, '')),
+  `location` = REPLACE(REPLACE(TRIM(NULLIF(@location, '')), ',,', ','), 'MACK,C', 'MACK C'),
   `country` = TRIM(NULLIF(@country, '')),
   `latitude` = TRIM(NULLIF(@latitude, '')),
   `longitude` = TRIM(NULLIF(@longitude, '')),
@@ -329,7 +329,21 @@ SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `event-date`
     OR `event-date` LIKE '1962%' OR `event-date` LIKE '1974%' OR `event-date` LIKE '1977%');
 DELETE FROM `events-ntsb` WHERE `event-date` LIKE '1948%' OR `event-date` LIKE '1962%'
     OR `event-date` LIKE '1974%' OR `event-date` LIKE '1977%';
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `country` <> 'United States'
+    OR `country` IS NULL);
+DELETE FROM `events-ntsb` WHERE `country` <> 'United States' OR `country` IS NULL;
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `location` LIKE '%, FN'
+    OR `location` LIKE '%, AO' OR `location` LIKE '%, PO' OR `location` LIKE '%, UN'
+    OR `location` LIKE '%, SI' OR `location` LIKE '%, HO');
+DELETE FROM `events-ntsb` WHERE `location` LIKE '%, FN'
+    OR `location` LIKE '%, AO' OR `location` LIKE '%, PO' OR `location` LIKE '%, UN'
+    OR `location` LIKE '%, SI' OR `location` LIKE '%, HO';
 SELECT CONCAT(CONCAT('Deleted ', @deleted), ' Rows');
+
+UPDATE `events-ntsb` SET `injuries-fatal` = IFNULL(`injuries-fatal`, 0),
+  `injuries-serious` = IFNULL(`injuries-serious`, 0), `injuries-minor` = IFNULL(`injuries-minor`, 0),
+  `uninjured` = IFNULL(`uninjured`, 0) WHERE NOT (`injuries-fatal` IS NULL AND `injuries-serious` IS NULL AND
+    `injuries-minor` IS NULL AND `uninjured` IS NULL);
 
 # Create events table.
 DROP TABLE IF EXISTS `events`;
@@ -425,14 +439,19 @@ INSERT INTO `events`
     UCASE(`investigation-type`), # investigation-type
     UCASE(`report-status`), # report-status
     `event-date`, # date
-    NULL, # city
-    NULL, # state
+    IF(INSTR(`location`, ',') = 0, # city
+       WordCase(`location`),
+       WordCase(TRIM(LEFT(`location`, INSTR(`location`, ',') - 1)))),
+    IF(INSTR(`location`, ',') = 0, # state
+       NULL,
+       UCASE(TRIM(SUBSTRING(`location`, INSTR(`location`, ',') + 1)))),
     WordCase(`airport-name`), # airport-name
     UCASE(`airport-code`), # airport-code
     `latitude`, # latitude
     `longitude`, # longitude
-    `injuries-fatal`, # fatalities
-    (`injuries-serious` + `injuries-minor`), # injuries
+    IFNULL(`injuries-fatal`, IF(`injury-severity` = 'Non-Fatal', 0, NULL)), # fatalities
+    IF(`injuries-serious` IS NULL AND `injuries-minor` IS NULL, NULL, # injuries
+       (IFNULL(`injuries-serious`, 0) + IFNULL(`injuries-minor`, 0))),
     `uninjured`, # uninjured
     UCASE(`aircraft-reg-number`), # aircraft-reg-number
     WordCase(`aircraft-category`), # aircraft-category

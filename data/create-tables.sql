@@ -325,6 +325,10 @@ SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `event-date`
 DELETE FROM `events-ntsb` WHERE `event-date` IS NULL;
 SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-faa` WHERE `date` IS NULL);
 DELETE FROM `events-faa` WHERE `date` IS NULL;
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `event-date` LIKE '1948%'
+    OR `event-date` LIKE '1962%' OR `event-date` LIKE '1974%' OR `event-date` LIKE '1977%');
+DELETE FROM `events-ntsb` WHERE `event-date` LIKE '1948%' OR `event-date` LIKE '1962%'
+    OR `event-date` LIKE '1974%' OR `event-date` LIKE '1977%';
 SELECT CONCAT(CONCAT('Deleted ', @deleted), ' Rows');
 
 # Create events table.

@@ -327,13 +327,6 @@ SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `country` <>
     OR `country` IS NULL);
 DELETE FROM `events-ntsb` WHERE `country` <> 'United States' OR `country` IS NULL;
 
-SET @deleted = @deleted + (SELECT COUNT(*) FROM `events-ntsb` WHERE `location` LIKE '%, FN'
-    OR `location` LIKE '%, AO' OR `location` LIKE '%, PO' OR `location` LIKE '%, UN'
-    OR `location` LIKE '%, SI' OR `location` LIKE '%, HO');
-DELETE FROM `events-ntsb` WHERE `location` LIKE '%, FN'
-    OR `location` LIKE '%, AO' OR `location` LIKE '%, PO' OR `location` LIKE '%, UN'
-    OR `location` LIKE '%, SI' OR `location` LIKE '%, HO';
-
 UPDATE `events-ntsb` SET `injuries-fatal` = IFNULL(`injuries-fatal`, 0),
   `injuries-serious` = IFNULL(`injuries-serious`, 0), `injuries-minor` = IFNULL(`injuries-minor`, 0),
   `uninjured` = IFNULL(`uninjured`, 0) WHERE NOT (`injuries-fatal` IS NULL AND `injuries-serious` IS NULL AND
@@ -409,7 +402,7 @@ INSERT INTO `events`
     NULL, # engine-type
     UCASE(`aircraft-damage`), # aircraft-damage
     WordCase(`operator`), # operator
-    UCASE(`flight-conduct-code`), # far-desc
+    NULLIF(UCASE(`flight-conduct-code`), 'UNKNOWN'), # far-desc
     UCASE(`pilot-certification`), # pilot-certification
     `pilot-total-hours`, # pilot-total-hours
     `pilot-make-model-hours`, # pilot-make-model-hours
@@ -458,7 +451,7 @@ INSERT INTO `events`
     UCASE(`aircraft-damage`), # aircraft-damage
     WordCase(`air-carrier`), # operator
     IF(INSTR(`far-desc`, ':') = 0, # far-desc
-       UCASE(`far-desc`),
+       NULLIF(UCASE(`far-desc`), 'UNKNOWN'),
        TRIM(SUBSTRING(UCASE(`far-desc`) FROM INSTR(UCASE(`far-desc`), ':') + 2))),
     NULL, # pilot-certification
     NULL, # pilot-total-hours
@@ -475,8 +468,59 @@ DROP TABLE `events-ntsb`;
 SELECT 'Clean Junk Data';
 UPDATE `events` SET `aircraft-reg-number` = NULL WHERE `aircraft-reg-number` LIKE 'UN%'
     OR `aircraft-reg-number` LIKE 'NONE';
+
 SET @deleted = @deleted + (SELECT COUNT(*) FROM `events` WHERE `date` IS NULL);
 DELETE FROM `events` WHERE `date` IS NULL;
+
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events` WHERE `state` = 'AA' OR `state` = 'ON' OR `state` = 'FN'
+    OR `state` = 'AO' OR `state` = 'PO' OR `state` = 'UN' OR `state` = 'SI' OR `state` = 'HO');
+DELETE FROM `events` WHERE `state` = 'AA' OR `state` = 'ON' OR `state` = 'FN'
+    OR `state` = 'AO' OR `state` = 'PO' OR `state` = 'UN' OR `state` = 'SI' OR `state` = 'HO';
+
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events` WHERE `far-desc` = 'AIR CARRIER/COMMERCIAL'
+    OR `far-desc` = 'TRAVEL CLUB' OR `far-desc` = 'PARACHUTE JUMPING' OR `far-desc` = 'AIR TAXI/COMMUTER'
+    OR `far-desc` = 'PILOT SCHOOLS' OR `far-desc` = 'AGRICULTURAL' OR `far-desc` = 'FOREIGN AIR CARRIER'
+    OR `far-desc` = 'SCHEDULED AIRCRAFT/HELICOPTER' OR `far-desc` = 'ROTORCRAFT EXTERNAL LOAD OPERATIONS'
+    OR `far-desc` = 'PART 125 OPERATOR' OR `far-desc` = 'AIR TAXI & COMMUTER'
+    OR `far-desc` = 'PUBLIC USE' OR `far-desc` = 'AIR CARRIER' OR `far-desc` = 'ROTORCRAFT EXT. LOAD'
+    OR `far-desc` = 'FOREIGN' OR `far-desc` = '20+ PAX,6000+ LBS' OR `far-desc` = 'ARMED FORCES'
+    OR `far-desc` = 'NON-U.S., COMMERCIAL');
+DELETE FROM `events` WHERE `far-desc` = 'AIR CARRIER/COMMERCIAL'
+    OR `far-desc` = 'TRAVEL CLUB' OR `far-desc` = 'PARACHUTE JUMPING' OR `far-desc` = 'AIR TAXI/COMMUTER'
+    OR `far-desc` = 'PILOT SCHOOLS' OR `far-desc` = 'AGRICULTURAL' OR `far-desc` = 'FOREIGN AIR CARRIER'
+    OR `far-desc` = 'SCHEDULED AIRCRAFT/HELICOPTER' OR `far-desc` = 'ROTORCRAFT EXTERNAL LOAD OPERATIONS'
+    OR `far-desc` = 'PART 125 OPERATOR' OR `far-desc` = 'AIR TAXI & COMMUTER'
+    OR `far-desc` = 'PUBLIC USE' OR `far-desc` = 'AIR CARRIER' OR `far-desc` = 'ROTORCRAFT EXT. LOAD'
+    OR `far-desc` = 'FOREIGN' OR `far-desc` = '20+ PAX,6000+ LBS' OR `far-desc` = 'ARMED FORCES'
+    OR `far-desc` = 'NON-U.S., COMMERCIAL';
+
+SET @deleted = @deleted + (SELECT COUNT(*) FROM `events` WHERE `flight-type` = 'PUBLIC USE'
+    OR `flight-type` = 'ILLEGAL DRUG, STOLEN AIRCRAFT, ETC.' OR `flight-type` = 'AIR TAXI (NON-SCHEDULED)'
+    OR `flight-type` = 'SCHEDULED AIR CARRIER' OR `flight-type` = 'FOR HIRE'
+    OR `flight-type` = 'AERIAL APPLICATOR' OR `flight-type` = 'AIR TAXI (SCHEDULED- NOT COMMUTER)'
+    OR `flight-type` = 'AIR TAXI OPERATOR- LARGE AIRCRAFT' OR `flight-type` = 'ALL CARGO CARRIERS'
+    OR `flight-type` = 'AIR TAXI COMMUTER (SCHEDULED 5 OR MORE ROUNDTRIPS PER WEEK)'
+    OR `flight-type` = 'SUPPLEMENTAL OR COMMERCIAL OPERATOR' OR `flight-type` = 'AIR DROP'
+    OR `flight-type` = 'SKYDIVING' OR `flight-type` = 'FLIGHT TEST' OR `flight-type` = 'BANNER TOW'
+    OR `flight-type` = 'PUBLIC AIRCRAFT - FEDERAL' OR `flight-type` = 'FERRY' OR `flight-type` = 'GLIDER TOW'
+    OR `flight-type` = 'AIR RACE/SHOW' OR `flight-type` = 'EXTERNAL LOAD'
+    OR `flight-type` = 'AERIAL APPLICATION' OR `flight-type` = 'FIRE FIGHTING'
+    OR `flight-type` = 'PUBLIC AIRCRAFT - STATE' OR `flight-type` = 'PUBLIC AIRCRAFT - LOCAL'
+    OR `flight-type` = 'INDUSTRIAL/SPECIAL');
+DELETE FROM `events` WHERE `flight-type` = 'PUBLIC USE'
+    OR `flight-type` = 'ILLEGAL DRUG, STOLEN AIRCRAFT, ETC.' OR `flight-type` = 'AIR TAXI (NON-SCHEDULED)'
+    OR `flight-type` = 'SCHEDULED AIR CARRIER' OR `flight-type` = 'FOR HIRE'
+    OR `flight-type` = 'AERIAL APPLICATOR' OR `flight-type` = 'AIR TAXI (SCHEDULED- NOT COMMUTER)'
+    OR `flight-type` = 'AIR TAXI OPERATOR- LARGE AIRCRAFT' OR `flight-type` = 'ALL CARGO CARRIERS'
+    OR `flight-type` = 'AIR TAXI COMMUTER (SCHEDULED 5 OR MORE ROUNDTRIPS PER WEEK)'
+    OR `flight-type` = 'SUPPLEMENTAL OR COMMERCIAL OPERATOR' OR `flight-type` = 'AIR DROP'
+    OR `flight-type` = 'SKYDIVING' OR `flight-type` = 'FLIGHT TEST' OR `flight-type` = 'BANNER TOW'
+    OR `flight-type` = 'PUBLIC AIRCRAFT - FEDERAL' OR `flight-type` = 'FERRY' OR `flight-type` = 'GLIDER TOW'
+    OR `flight-type` = 'AIR RACE/SHOW' OR `flight-type` = 'EXTERNAL LOAD'
+    OR `flight-type` = 'AERIAL APPLICATION' OR `flight-type` = 'FIRE FIGHTING'
+    OR `flight-type` = 'PUBLIC AIRCRAFT - STATE' OR `flight-type` = 'PUBLIC AIRCRAFT - LOCAL'
+    OR `flight-type` = 'INDUSTRIAL/SPECIAL';
+
 SELECT CONCAT(CONCAT('Deleted ', @deleted), ' Rows');
 
 SELECT 'Merge Duplicate Events';

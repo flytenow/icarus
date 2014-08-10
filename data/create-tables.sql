@@ -521,6 +521,10 @@ DELETE FROM `events` WHERE `flight-type` = 'PUBLIC USE'
     OR `flight-type` = 'PUBLIC AIRCRAFT - STATE' OR `flight-type` = 'PUBLIC AIRCRAFT - LOCAL'
     OR `flight-type` = 'INDUSTRIAL/SPECIAL';
 
+SET @deleted = @deleted +
+    (SELECT COUNT(*) FROM `events` WHERE LEFT(`date`, 4) < 1982 OR LEFT(`date`, 4) >= YEAR(CURDATE()));
+DELETE FROM `events` WHERE LEFT(`date`, 4) < 1982 OR LEFT(`date`, 4) >= YEAR(CURDATE());
+
 SELECT CONCAT(CONCAT('Deleted ', @deleted), ' Rows');
 
 SELECT 'Merge Duplicate Events';

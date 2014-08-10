@@ -36,7 +36,7 @@ angular.module('icarus', ['angles'])
 
       datasetStrokeWidth: 3,
 
-      legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].lineColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
+      legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><div class=\"legend-bullet\" style=\"background-color:<%=datasets[i].strokeColor%>\"></div><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
     };
 
     $http.get('/query')
@@ -47,12 +47,12 @@ angular.module('icarus', ['angles'])
           labels: _.pluck(data.years, 'year'),
           datasets: [
             {
-              label: 'Incidents',
+              label: 'All Events',
               fillColor: "rgba(200,200,200,0.4)",
               strokeColor: "#c8c8c8",
               pointColor: "#c8c8c8",
               pointStrokeColor: "#c8c8c8",
-              data: _.pluck(data.years, 'incidents')
+              data: _.pluck(data.years, 'events')
             },
             {
               label: 'Injuries',

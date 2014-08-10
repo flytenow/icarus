@@ -3,6 +3,7 @@
 @accent: #09d;
 @brand-primary: @accent;
 
+
 .header {
   color: @accent;
   font-weight: bold;
@@ -21,9 +22,30 @@
   margin: 50px auto;
 }
 
-.graph {
-  width: 80%;
-  height: 750px;
-  margin: 0 auto;
-}
+.graph-wrapper {
+  position: relative;
+  padding-right: 45px;
 
+  .graph {
+    min-height: 750px;
+  }
+
+  .line-legend {
+    position: absolute;
+    right: 45px;
+    top: 15px;
+    font-size: 30px;
+    list-style-type: none;
+    background: rgba(200, 200, 200, 0.4);
+    border-radius: 4px;
+    padding: 0 10px;
+
+    .legend-bullet {
+      display: inline-block;
+      height: 15px;
+      width: 15px;
+      margin-right: 8px;
+      margin-bottom: 3px;
+    }
+  }
+}

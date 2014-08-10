@@ -1,0 +1,14 @@
+{
+  "name": "icarus",
+  "version": "0.1.0",
+  "authors": [
+    "Andrew Mass <amass1212@gmail.com> (http://mass.red)"
+  ],
+  "description": "An interactive way to view aviation accident data in the United States.",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "~3.2.0",
+    "angles": "*"
+  }
+}

@@ -1,6 +1,5 @@
 var express = require('express');
 var path = require('path');
-var _ = require('lodash');
 var mysql = require('mysql');
 var util = require('./util');
 
@@ -10,16 +9,16 @@ connection.query('USE `icarus`');
 var app = express();
 
 app.engine('.html', require('ejs').renderFile);
-//app.set('views', path.join(__dirname, 'path/to/views'));
-//app.use(express.static(path.join(__dirname, 'path/to/static')));
+app.set('views', path.join(__dirname, '../client/views'));
+app.use(express.static(path.join(__dirname, '../client/static')));
+app.use('/vendor', express.static(path.join(__dirname, '../client/bower_components')));
 
 app.get('/', function(request, response) {
-  //response.render('index.html');
-  response.send('Hello world.')
+  response.render('index.html');
 });
 
 app.get('/query', function(request, response) {
-  connection.query('SELECT date FROM events', function(err, rows) {
+  connection.query('SELECT date, fatalities, injuries FROM events', function(err, rows) {
     if(err) {
       response.status(500);
       response.send(err);

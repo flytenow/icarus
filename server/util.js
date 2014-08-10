@@ -3,11 +3,14 @@ var _ = require('lodash');
 module.exports.getResponse = function(rows) {
   var years = [];
   _.forEach(rows, function(row) {
-    var year = row.date.substr(0, 4);
-    if (!_.find(years, {year: year})) {
-      years.push({year: year, count: 1});
+    var date = row.date.substr(0, 4);
+    if (!_.find(years, {year: date})) {
+      years.push({year: date, incidents: 1, fatalities: row.fatalities || 0, injuries: row.injuries || 0});
     } else {
-      _.find(years, {year: year}).count++;
+      var year = _.find(years, {year: date});
+      year.incidents++;
+      year.fatalities += row.fatalities;
+      year.injuries += row.injuries;
     }
   });
   return {years: _.sortBy(years, 'year')};

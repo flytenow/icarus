@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" ng-app="icarus">
+  <head>
+    <meta charset="utf-8">
+    <title>icarus</title>
+    <link rel="stylesheet" href="/main.css">
+    <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.21/angular.min.js"></script>
+  </head>
+  <body ng-controller="IcarusController">
+
+    <a target="_blank" href="https://github.com/flytenow/icarus">
+      <img style="position: absolute; top: 0; right: 0; border: 0; z-index: 999"
+        src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67"
+        alt="Fork me on GitHub"
+        data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png">
+    </a>
+
+    <div class="container-fluid">
+
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="header">icarus</h1>
+
+          <h2 class="subheader">An interactive way to view aviation accident data in the United States.</h2>
+
+          <form ng-submit="query()">
+            <div class="row">
+              <div class="col-md-offset-3 col-md-4 form-group">
+                <input type="text" class="form-control input-lg" placeholder="Enter your query here."
+                  ng-model="form.query">
+              </div>
+              <div class="col-md-2 form-group">
+                <button class="btn btn-block btn-primary btn-lg" type="submit">Submit Query</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="graph" ng-if="chartDataset">
+        <canvas linechart options="chartOptions" data="chartDataset" legend="true"></canvas>
+      </div>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+    <script type="text/javascript" src="/vendor/chartjs/Chart.js"></script>
+    <script type="text/javascript" src="/vendor/angles/angles.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

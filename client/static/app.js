@@ -1,4 +1,4 @@
-angular.module('icarus', ['angles'])
+angular.module('icarus', ['angles', 'vr.directives.slider'])
   .controller('IcarusController', function($scope, $http) {
 
     $scope.years = [];
@@ -39,12 +39,42 @@ angular.module('icarus', ['angles'])
       legendTemplate: "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><div class=\"legend-bullet\" style=\"background-color:<%=datasets[i].strokeColor%>\"></div><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
     };
 
+    $scope.controls = {};
+
+    $scope.controls.date = {};
+    $scope.controls.date.floor = 1982;
+    $scope.controls.date.ceil = 2013;
+    $scope.controls.date.low = 1982;
+    $scope.controls.date.high = 2013;
+
+    $scope.controls.date.changed = function() {
+      var datasetKeys = ['events', 'injuries', 'fatalities'];
+
+      $scope.chartDataset.labels = _.pluck($scope.years,
+        'year').slice($scope.controls.date.low - $scope.controls.date.floor,
+          $scope.controls.date.high - $scope.controls.date.floor + 1);
+
+      for (var i = 0; i < $scope.chartDataset.datasets.length; i++) {
+        console.log('hi');
+        $scope.chartDataset.datasets[i].data = _.pluck($scope.years,
+          datasetKeys[i]).slice($scope.controls.date.low - $scope.controls.date.floor,
+            $scope.controls.date.high - $scope.controls.date.floor + 1);
+      }
+    };
+
     $http.get('/query')
       .success(function(data) {
         $scope.years = data.years;
 
+        var labels = _.pluck(data.years, 'year');
+
+        $scope.controls.date.floor = labels[0];
+        $scope.controls.date.low = labels[0];
+        $scope.controls.date.ceil = labels[labels.length - 1];
+        $scope.controls.date.high = labels[labels.length - 1];
+
         $scope.chartDataset = {
-          labels: _.pluck(data.years, 'year'),
+          labels: labels,
           datasets: [
             {
               label: 'All Events',

@@ -18,13 +18,21 @@ app.get('/', function(request, response) {
 });
 
 app.get('/query', function(request, response) {
-  connection.query('SELECT date, fatalities, injuries FROM events', function(err, rows) {
-    if(err) {
+  connection.query('SELECT COUNT(*) FROM events', function(err, count) {
+    if (err) {
       response.status(500);
       response.send(err);
       return;
     }
-    response.send(util.getResponse(rows));
+
+    connection.query('SELECT date, fatalities, injuries FROM events limit 80000', function(err, rows) {
+      if (err) {
+        response.status(500);
+        response.send(err);
+        return;
+      }
+      response.send(util.getResponse(rows, count[0]['COUNT(*)']));
+    });
   });
 });
 

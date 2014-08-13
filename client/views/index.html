@@ -47,7 +47,7 @@
               <form role="form">
                 <div class="form-group">
                   <slider floor="{{ controls.date.floor }}" ceiling="{{ controls.date.ceil }}" step="1"
-                    ng-model="controls.date.low" ng-model-range="controls.date.high"
+                    ng-model="controls.date.low" ng-model-range="controls.date.high" buffer="1"
                     ng-change="controls.date.changed()">
                   </slider>
                 </div>
@@ -85,6 +85,18 @@
             </div>
           </div>
 
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <strong>Data Utilization</strong>
+            </div>
+            <div class="panel-body">
+              <progressbar class="progress-striped" value="dataUtilization" type="primary">
+                <b>{{ dataUtilization | number:0 }}%</b>
+              </progressbar>
+              {{ activeRows }} of {{ maxRows }} Utilized
+            </div>
+          </div>
+
           <div class="panel panel-primary flytenow-ad">
             <div class="panel-body">
               <a href="//flytenow.com" target="_blank">
@@ -103,10 +115,12 @@
     </div>
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
-    <script type="text/javascript" src="/vendor/chartjs/Chart.js"></script>
-    <script type="text/javascript" src="/vendor/angles/angles.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.14/angular-touch.min.js"></script>
-    <script type="text/javascript" src="/vendor/venturocket-angular-slider/build/angular-slider.min.js"></script>
+    <script src="/vendor/chartjs/Chart.js"></script>
+    <script src="/vendor/angles/angles.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.14/angular-touch.min.js"></script>
+    <script src="/vendor/venturocket-angular-slider/build/angular-slider.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.10.0/ui-bootstrap-tpls.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

@@ -1,7 +1,11 @@
-angular.module('icarus', ['angles', 'vr.directives.slider'])
-  .controller('IcarusController', function($scope, $http) {
+angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
+  .controller('IcarusController', function($scope, $http, $timeout) {
 
     $scope.years = [];
+
+    $scope.dataUtilization = 0;
+    $scope.activeRows = 0;
+    $scope.maxRows = 0;
 
     $scope.chartOptions = {
       scaleLineWidth: 2,
@@ -48,22 +52,32 @@ angular.module('icarus', ['angles', 'vr.directives.slider'])
     $scope.controls.date.high = 2013;
 
     $scope.controls.date.changed = function() {
-      var datasetKeys = ['events', 'injuries', 'fatalities'];
-
-      $scope.chartDataset.labels = _.pluck($scope.years,
-        'year').slice($scope.controls.date.low - $scope.controls.date.floor,
-          $scope.controls.date.high - $scope.controls.date.floor + 1);
-
-      for (var i = 0; i < $scope.chartDataset.datasets.length; i++) {
-        console.log('hi');
-        $scope.chartDataset.datasets[i].data = _.pluck($scope.years,
-          datasetKeys[i]).slice($scope.controls.date.low - $scope.controls.date.floor,
-            $scope.controls.date.high - $scope.controls.date.floor + 1);
+      if ($scope.controls.change) {
+        $scope.controls.change.cancel();
       }
+      $scope.controls.change = $timeout(function() {
+        var datasetKeys = ['events', 'injuries', 'fatalities'];
+
+        $scope.chartDataset.labels = _.pluck($scope.years,
+          'year').slice($scope.controls.date.low - $scope.controls.date.floor,
+            $scope.controls.date.high - $scope.controls.date.floor + 1);
+
+        for (var i = 0; i < $scope.chartDataset.datasets.length; i++) {
+          console.log('hi');
+          $scope.chartDataset.datasets[i].data = _.pluck($scope.years,
+            datasetKeys[i]).slice($scope.controls.date.low - $scope.controls.date.floor,
+              $scope.controls.date.high - $scope.controls.date.floor + 1);
+        }
+        $scope.controls.change = null;
+      }, 200);
     };
 
     $http.get('/query')
       .success(function(data) {
+        $scope.activeRows = data.activeRows;
+        $scope.maxRows = data.maxRows;
+        $scope.dataUtilization = (data.activeRows / data.maxRows) * 100;
+
         $scope.years = data.years;
 
         var labels = _.pluck(data.years, 'year');

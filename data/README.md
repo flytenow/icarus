@@ -7,7 +7,7 @@
 - [NTSB](http://www.ntsb.gov/aviationquery/) The NTSB database contains aviation accident information from all over the world, but only events in the United States are used. The NTSB has the primary investigative responsibility for most aviation accident in the United States.
 
 ## Preparation
-First, you need to install `mysql-server`. There are many guides on how to do this for any operating system, so I won't go into any detail. Once the MySQL server is installed and running, you need to create a database. This can be done with `CREATE DATABASE icarus`. Then all that is necessary is to run `download-data.sh`. While there is only about 50MB of data to download, the script can take up to 10 minutes as the servers take a very long time to send a response. The script assumes that you did not set a password for your root mysql user. If this is not the case, you will need to modify the command at the end of the script or just run a modified command yourself.
+First, you need to install `mysql-server`. There are many guides on how to do this for any operating system, so I won't go into any detail. Once the MySQL server is installed and running, you need to create a database. This can be done with `CREATE DATABASE icarus`. Then all that is necessary is to run `download-data`. While there is only about 50MB of data to download, the script can take up to 10 minutes as the servers take a very long time to send a response. The script assumes that you did not set a password for your root mysql user. If this is not the case, you will need to modify the command at the end of the script or just run a modified command yourself.
 
 ## `events` Schema
 | Field | Type | Nullable | Default | Description |

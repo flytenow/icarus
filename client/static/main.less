@@ -26,20 +26,36 @@ body {
   margin: 50px auto;
 }
 
-
 .controls {
 
   .btn-submit {
     width: 100%;
   }
 
-  slider .bar.unselected.high {
-    display: none !important;
-  }
+  slider {
+    display: block;
+    width: auto;
 
-  slider .selection {
-    display: none !important;
+    .bar.unselected.high, .floor, .ceiling {
+      display: none !important;
+    }
+
+    .low, .middle, .high {
+      font-size: 20px;
+    }
+
+    .bubble {
+      top: -35px;
+    }
+
+    .bar.full {
+      background: black;
+    }
   }
+}
+
+.progress {
+  margin: 10px 0;
 }
 
 .flytenow-ad img {
@@ -58,7 +74,7 @@ body {
     position: absolute;
     right: 45px;
     top: 15px;
-    font-size: 30px;
+    font-size: 20px;
     list-style-type: none;
     background: rgba(200, 200, 200, 0.4);
     border-radius: 4px;
@@ -67,10 +83,10 @@ body {
 
     .legend-bullet {
       display: inline-block;
-      height: 15px;
-      width: 15px;
-      margin-right: 8px;
-      margin-bottom: 3px;
+      height: 20px;
+      width: 20px;
+      margin-right: 13px;
+      margin-bottom: -3px;
     }
   }
 }

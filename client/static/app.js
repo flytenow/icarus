@@ -1,5 +1,6 @@
 angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
-  .controller('IcarusController', function($scope, $http, $timeout) {
+  .controller('IcarusController', function($scope, $http) {
+    $scope._ = _;
 
     $scope.years = [];
 
@@ -44,40 +45,14 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
     };
 
     $scope.controls = {};
+    $scope.controls.date = {floor: 1982, ceil: 2013, low: 1982, high: 2013};
 
-    $scope.controls.date = {};
-    $scope.controls.date.floor = 1982;
-    $scope.controls.date.ceil = 2013;
-    $scope.controls.date.low = 1982;
-    $scope.controls.date.high = 2013;
-
-    $scope.controls.date.changed = function() {
-      if ($scope.controls.change) {
-        $scope.controls.change.cancel();
-      }
-      $scope.controls.change = $timeout(function() {
-        var datasetKeys = ['events', 'injuries', 'fatalities'];
-
-        $scope.chartDataset.labels = _.pluck($scope.years,
-          'year').slice($scope.controls.date.low - $scope.controls.date.floor,
-            $scope.controls.date.high - $scope.controls.date.floor + 1);
-
-        for (var i = 0; i < $scope.chartDataset.datasets.length; i++) {
-          console.log('hi');
-          $scope.chartDataset.datasets[i].data = _.pluck($scope.years,
-            datasetKeys[i]).slice($scope.controls.date.low - $scope.controls.date.floor,
-              $scope.controls.date.high - $scope.controls.date.floor + 1);
-        }
-        $scope.controls.change = null;
-      }, 200);
-    };
-
-    $http.get('/query')
+    var params = {dateLow: $scope.controls.date.low, dateHigh: $scope.controls.date.high};
+    $http({method: 'GET', url: '/query', params: params})
       .success(function(data) {
         $scope.activeRows = data.activeRows;
         $scope.maxRows = data.maxRows;
         $scope.dataUtilization = (data.activeRows / data.maxRows) * 100;
-
         $scope.years = data.years;
 
         var labels = _.pluck(data.years, 'year');
@@ -119,5 +94,18 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
       });
 
     $scope.query = function() {
-    }
+      var params = {dateLow: $scope.controls.date.low, dateHigh: $scope.controls.date.high};
+      $http({method: 'GET', url: '/query', params: params})
+        .success(function(data) {
+          $scope.activeRows = data.activeRows;
+          $scope.maxRows = data.maxRows;
+          $scope.dataUtilization = (data.activeRows / data.maxRows) * 100;
+          $scope.years = data.years;
+
+          $scope.chartDataset.labels = _.pluck(data.years, 'year');
+          $scope.chartDataset.datasets[0].data = _.pluck(data.years, 'events');
+          $scope.chartDataset.datasets[1].data = _.pluck(data.years, 'injuries');
+          $scope.chartDataset.datasets[2].data = _.pluck(data.years, 'fatalities');
+        });
+    };
   });

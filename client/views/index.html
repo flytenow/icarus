@@ -23,32 +23,21 @@
           <h1 class="header">icarus</h1>
 
           <h2 class="subheader">An interactive way to view aviation accident data in the United States.</h2>
-
-          <form ng-submit="query()">
-            <div class="row">
-              <div class="col-md-offset-3 col-md-4 form-group">
-                <input type="text" class="form-control input-lg"
-                  placeholder="Enter your query here. (Or don't because it doesn't do anything.)"
-                  ng-model="form.query">
-              </div>
-              <div class="col-md-2 form-group">
-                <button class="btn btn-block btn-primary btn-lg" type="submit">Submit Query</button>
-              </div>
-            </div>
-          </form>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-2">
           <div class="panel panel-primary controls">
-            <div class="panel-heading"><strong>Controls</strong></div>
+            <div class="panel-heading">
+              <b>Controls</b>
+            </div>
             <div class="panel-body">
               <form role="form">
                 <div class="form-group">
                   <slider floor="{{ controls.date.floor }}" ceiling="{{ controls.date.ceil }}" step="1"
                     ng-model="controls.date.low" ng-model-range="controls.date.high" buffer="1"
-                    ng-change="controls.date.changed()">
+                    translate-range-fn="_.noop">
                   </slider>
                 </div>
                 <div class="form-group">
@@ -80,20 +69,20 @@
                     <input type="checkbox"> Check me out
                   </label>
                 </div>
-                <button type="submit" class="btn btn-primary btn-lg btn-submit">Submit</button>
+                <button type="submit" class="btn btn-primary btn-lg btn-submit" ng-click="query()">Submit</button>
               </form>
             </div>
           </div>
 
           <div class="panel panel-primary">
             <div class="panel-heading">
-              <strong>Data Utilization</strong>
+              <b>Data Utilization</b>
             </div>
             <div class="panel-body">
+              <b>{{ activeRows }}</b> of <b>{{ maxRows }}</b> Events Utilized
               <progressbar class="progress-striped" value="dataUtilization" type="primary">
                 <b>{{ dataUtilization | number:0 }}%</b>
               </progressbar>
-              {{ activeRows }} of {{ maxRows }} Utilized
             </div>
           </div>
 

@@ -50,6 +50,11 @@ app.get('/info', function(request, response) {
     return doQuery('SELECT DISTINCT `investigation-type` FROM `events`', deferred);
   };
 
+  var queryDistinctFatalities = function() {
+    var deferred = q.defer();
+    return doQuery('SELECT DISTINCT `fatalities` FROM `events` ORDER BY `fatalities` DESC', deferred);
+  };
+
   var info = {distinct: {}, range: {}};
 
   queryCount().then(function(results) {
@@ -62,11 +67,14 @@ app.get('/info', function(request, response) {
     })
     .then(function(results) {
       info.distinct.investigationType = _.pluck(results, 'investigation-type');
+      return queryDistinctFatalities();
+    }).then(function(results) {
+      info.range.fatalities = {ceil: results[0].fatalities, floor: results[results.length - 2].fatalities};
       response.send(info);
-    })
+    });
 });
 
-app.get('/query', function(request, response) {
+app.post('/query', function(request, response) {
   connection.query('SELECT COUNT(*) FROM events', function(err, count) {
     if (err) {
       response.status(500);
@@ -75,14 +83,15 @@ app.get('/query', function(request, response) {
     }
 
     var query = "SELECT `date`, `fatalities`, `injuries` FROM `events` " +
-      "WHERE LEFT(`date`, 4) >= " + request.query.dateLow + " AND LEFT(`date`, 4) <= " + request.query.dateHigh;
+      "WHERE LEFT(`date`, 4) >= " + request.body.date.low + " AND LEFT(`date`, 4) <= " + request.body.date.high +
+      " AND `fatalities` >= " + request.body.fatalities.low + " AND `fatalities` <= " + request.body.fatalities.high;;
 
-    if (request.query.source && request.query.source !== "") {
-      query += " AND (`source` = '" + request.query.source + "' OR `source` = 'BOTH')";
+    if (request.body.source && request.body.source !== "") {
+      query += " AND (`source` = '" + request.body.source + "' OR `source` = 'BOTH')";
     }
 
-    if (request.query.investigationType && request.query.investigationType !== "") {
-      query += " AND `investigation-type` = '" + request.query.investigationType + "'";
+    if (request.body.investigationType && request.body.investigationType !== "") {
+      query += " AND `investigation-type` = '" + request.body.investigationType + "'";
     }
 
     connection.query(query, function(err, rows) {

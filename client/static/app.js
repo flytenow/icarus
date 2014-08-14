@@ -59,11 +59,15 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
       .success(function(data) {
         $scope.controls.date = {floor: data.range.date.floor, low: data.range.date.floor,
           ceil: data.range.date.ceil, high: data.range.date.ceil};
+        $scope.controls.fatalities = {floor: data.range.fatalities.floor, low: data.range.fatalities.floor,
+          ceil: data.range.fatalities.ceil, high: data.range.fatalities.ceil};
         $scope.maxRows = data.maxRows;
         $scope.distinct = data.distinct;
 
-        var params = {dateLow: $scope.controls.date.low, dateHigh: $scope.controls.date.high};
-        $http({method: 'GET', url: '/query', params: params})
+        var params = {};
+        params.date = {low: $scope.controls.date.low, high: $scope.controls.date.high};
+        params.fatalities = {low: $scope.controls.fatalities.low, high: $scope.controls.fatalities.high};
+        $http.post('/query', params)
           .success(function(data) {
             $scope.activeRows = data.activeRows;
             $scope.dataUtilization = (data.activeRows / $scope.maxRows) * 100;
@@ -112,8 +116,10 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
       if (_.isUndefined(params) || _.isNull(params)) {
         params = {};
       }
-      angular.extend(params, {dateLow: $scope.controls.date.low, dateHigh: $scope.controls.date.high});
-      $http({method: 'GET', url: '/query', params: params})
+      angular.extend(params, {date: {low: $scope.controls.date.low, high: $scope.controls.date.high}});
+      angular.extend(params,
+        {fatalities: {low: $scope.controls.fatalities.low, high: $scope.controls.fatalities.high}});
+      $http.post('/query', params)
         .success(function(data) {
           $scope.activeRows = data.activeRows;
           $scope.dataUtilization = (data.activeRows / $scope.maxRows) * 100;

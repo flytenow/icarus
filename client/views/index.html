@@ -35,6 +35,7 @@
             <div class="panel-body">
               <form novalidate role="form">
                 <div class="form-group">
+                  <label>Date Range</label>
                   <slider floor="{{ controls.date.floor }}" ceiling="{{ controls.date.ceil }}" step="1"
                     ng-model="controls.date.low" ng-model-range="controls.date.high" buffer="1"
                     translate-range-fn="_.noop">
@@ -54,6 +55,13 @@
                     ng-options="item as (item | titlecase ) for item in distinct.investigationType">
                     <option selected></option>
                   </select>
+                </div>
+                <div class="form-group">
+                  <label>Fatalities</label>
+                  <slider floor="{{ controls.fatalities.floor }}" ceiling="{{ controls.fatalities.ceil }}" step="1"
+                    ng-model="controls.fatalities.low" ng-model-range="controls.fatalities.high" buffer="1"
+                    translate-range-fn="_.noop">
+                  </slider>
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg btn-submit" ng-click="query(params)">Submit</button>
               </form>

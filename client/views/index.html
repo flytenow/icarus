@@ -33,7 +33,7 @@
               <b>Controls</b>
             </div>
             <div class="panel-body">
-              <form role="form">
+              <form novalidate role="form">
                 <div class="form-group">
                   <slider floor="{{ controls.date.floor }}" ceiling="{{ controls.date.ceil }}" step="1"
                     ng-model="controls.date.low" ng-model-range="controls.date.high" buffer="1"
@@ -41,35 +41,14 @@
                   </slider>
                 </div>
                 <div class="form-group">
-                  <label for="exampleOne">Example One</label>
-                  <input type="text" class="form-control" id="exampleOne" placeholder="Enter example one.">
+                  <label for="sourceSelect">Data Source</label>
+                  <select id="sourceSelect" class="form-control" ng-model="params.source">
+                    <option selected></option>
+                    <option>NTSB</option>
+                    <option>FAA</option>
+                  </select>
                 </div>
-                <div class="form-group">
-                  <label for="exampleTwo">Example Two</label>
-                  <input type="text" class="form-control" id="exampleTwo" placeholder="Enter example two.">
-                </div>
-                <div class="form-group">
-                  <label for="exampleInputFile">File input</label>
-                  <input type="file" id="exampleInputFile">
-
-                  <p class="help-block">Example block-level help text here.</p>
-                </div>
-                <div class="checkbox">
-                  <label>
-                    <input type="checkbox"> Check me out
-                  </label>
-                </div>
-                <div class="checkbox">
-                  <label>
-                    <input type="checkbox"> Check me out
-                  </label>
-                </div>
-                <div class="checkbox">
-                  <label>
-                    <input type="checkbox"> Check me out
-                  </label>
-                </div>
-                <button type="submit" class="btn btn-primary btn-lg btn-submit" ng-click="query()">Submit</button>
+                <button type="submit" class="btn btn-primary btn-lg btn-submit" ng-click="query(params)">Submit</button>
               </form>
             </div>
           </div>

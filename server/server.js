@@ -28,8 +28,12 @@ app.get('/query', function(request, response) {
       return;
     }
 
-    var query = 'SELECT date, fatalities, injuries FROM events ' +
-      'WHERE LEFT(date, 4) >= ' + request.query.dateLow + ' AND LEFT(date,4) <= ' + request.query.dateHigh;
+    var query = "SELECT date, fatalities, injuries FROM events " +
+      "WHERE LEFT(date, 4) >= " + request.query.dateLow + " AND LEFT(date,4) <= " + request.query.dateHigh;
+
+    if(request.query.source && request.query.source !== "") {
+      query += " AND (source = '" + request.query.source + "' OR source = 'BOTH')";
+    }
 
     connection.query(query, function(err, rows) {
       if (err) {

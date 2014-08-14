@@ -12,9 +12,11 @@ Make sure you are in the `/server` directory. Then, run `npm install` to downloa
 
 #### Parameters
 
-| Node | Type | Description |
-| --- | --- | --- |
-| None | --- | --- |
+| Node | Type | Required | Description |
+| --- | --- | --- | --- |
+| `dateLow` | `int` | true | The low end of the date range. |
+| `dateHigh` | `int` | true |The high end of the date range. |
+| `source` | `string` | false | Which government database to retrieve events from. |
 
 #### Returns
 

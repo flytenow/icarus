@@ -2,6 +2,8 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
   .controller('IcarusController', function($scope, $http) {
     $scope._ = _;
 
+    $scope.params = {};
+
     $scope.years = [];
 
     $scope.dataUtilization = 0;
@@ -93,8 +95,11 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
         };
       });
 
-    $scope.query = function() {
-      var params = {dateLow: $scope.controls.date.low, dateHigh: $scope.controls.date.high};
+    $scope.query = function(params) {
+      if(_.isUndefined(params) || _.isNull(params)) {
+        params = {};
+      }
+      angular.extend(params, {dateLow: $scope.controls.date.low, dateHigh: $scope.controls.date.high});
       $http({method: 'GET', url: '/query', params: params})
         .success(function(data) {
           $scope.activeRows = data.activeRows;

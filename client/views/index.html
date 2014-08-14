@@ -51,7 +51,7 @@
                 <div class="form-group">
                   <label for="investigationTypeSelect">Investigation Type</label>
                   <select id="investigationTypeSelect" class="form-control" ng-model="params.investigationType"
-                    ng-options="item for item in distinct.investigationType">
+                    ng-options="item as (item | titlecase ) for item in distinct.investigationType">
                     <option selected></option>
                   </select>
                 </div>

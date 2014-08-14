@@ -1,4 +1,12 @@
 angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
+  .filter('titlecase', function() {
+    return function(s) {
+      s = ( s === undefined || s === null ) ? '' : s;
+      return s.toString().toLowerCase().replace(/\b([a-z])/g, function(ch) {
+        return ch.toUpperCase();
+      });
+    };
+  })
   .controller('IcarusController', function($scope, $http) {
     $scope._ = _;
 

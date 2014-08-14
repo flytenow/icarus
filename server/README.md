@@ -8,7 +8,17 @@ Make sure you are in the `/server` directory. Then, run `npm install` to downloa
 
 ## API Documentation
 
-### `/query`
+### GET `/info`
+
+#### Returns
+
+| Node | Type | Description |
+| --- | --- | --- |
+| `distinct` | `object<array<string>>` | An object containing certain columns as keys and an array of strings representing the distinct values of that column as the value. |
+| `range` | `object<tuple<ceil, floor>>` | An object containing certain columns as keys and an object with keys `ceil` and `floor` representing the max and min value of that column. |
+| `maxRows` | `int` | The total number of events in the database. |
+
+### GET `/query`
 
 #### Parameters
 

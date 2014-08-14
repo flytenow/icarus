@@ -26,6 +26,7 @@ Make sure you are in the `/server` directory. Then, run `npm install` to downloa
 | --- | --- | --- | --- |
 | date | `tuple<int>` | true | An object containing the high and low ends of the date range. |
 | fatalities | `tuple<int>` | true | An object containing the high and low ends of the fatalities range. |
+| injuries | `tuple<int>` | true | An object containing the high and low ends of the injuries range. |
 | source | `string` | false | Which government database to retrieve events from. |
 | investigationType | `string` | false | Whether the event is an incident or an accident. |
 

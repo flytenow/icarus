@@ -63,6 +63,13 @@
                     translate-range-fn="_.noop">
                   </slider>
                 </div>
+                <div class="form-group">
+                  <label>Injuries</label>
+                  <slider floor="{{ controls.injuries.floor }}" ceiling="{{ controls.injuries.ceil }}" step="1"
+                    ng-model="controls.injuries.low" ng-model-range="controls.injuries.high" buffer="1"
+                    translate-range-fn="_.noop">
+                  </slider>
+                </div>
                 <button type="submit" class="btn btn-primary btn-lg btn-submit" ng-click="query(params)">Submit</button>
               </form>
             </div>

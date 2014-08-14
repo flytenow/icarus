@@ -55,6 +55,11 @@ app.get('/info', function(request, response) {
     return doQuery('SELECT DISTINCT `fatalities` FROM `events` ORDER BY `fatalities` DESC', deferred);
   };
 
+  var queryDistinctInjuries = function() {
+    var deferred = q.defer();
+    return doQuery('SELECT DISTINCT `injuries` FROM `events` ORDER BY `injuries` DESC', deferred);
+  };
+
   var info = {distinct: {}, range: {}};
 
   queryCount().then(function(results) {
@@ -70,6 +75,9 @@ app.get('/info', function(request, response) {
       return queryDistinctFatalities();
     }).then(function(results) {
       info.range.fatalities = {ceil: results[0].fatalities, floor: results[results.length - 2].fatalities};
+      return queryDistinctInjuries();
+    }).then(function(results) {
+      info.range.injuries = {ceil: results[0].injuries, floor: results[results.length - 2].injuries};
       response.send(info);
     });
 });
@@ -84,7 +92,8 @@ app.post('/query', function(request, response) {
 
     var query = "SELECT `date`, `fatalities`, `injuries` FROM `events` " +
       "WHERE LEFT(`date`, 4) >= " + request.body.date.low + " AND LEFT(`date`, 4) <= " + request.body.date.high +
-      " AND `fatalities` >= " + request.body.fatalities.low + " AND `fatalities` <= " + request.body.fatalities.high;;
+      " AND `fatalities` >= " + request.body.fatalities.low + " AND `fatalities` <= " + request.body.fatalities.high +
+      " AND `injuries` >= " + request.body.injuries.low + " AND `injuries` <= " + request.body.injuries.high;
 
     if (request.body.source && request.body.source !== "") {
       query += " AND (`source` = '" + request.body.source + "' OR `source` = 'BOTH')";

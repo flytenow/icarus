@@ -61,12 +61,15 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
           ceil: data.range.date.ceil, high: data.range.date.ceil};
         $scope.controls.fatalities = {floor: data.range.fatalities.floor, low: data.range.fatalities.floor,
           ceil: data.range.fatalities.ceil, high: data.range.fatalities.ceil};
+        $scope.controls.injuries = {floor: data.range.injuries.floor, low: data.range.injuries.floor,
+          ceil: data.range.injuries.ceil, high: data.range.injuries.ceil};
         $scope.maxRows = data.maxRows;
         $scope.distinct = data.distinct;
 
         var params = {};
         params.date = {low: $scope.controls.date.low, high: $scope.controls.date.high};
         params.fatalities = {low: $scope.controls.fatalities.low, high: $scope.controls.fatalities.high};
+        params.injuries = {low: $scope.controls.injuries.low, high: $scope.controls.injuries.high};
         $http.post('/query', params)
           .success(function(data) {
             $scope.activeRows = data.activeRows;
@@ -119,6 +122,7 @@ angular.module('icarus', ['angles', 'vr.directives.slider', 'ui.bootstrap'])
       angular.extend(params, {date: {low: $scope.controls.date.low, high: $scope.controls.date.high}});
       angular.extend(params,
         {fatalities: {low: $scope.controls.fatalities.low, high: $scope.controls.fatalities.high}});
+      angular.extend(params, {injuries: {low: $scope.controls.injuries.low, high: $scope.controls.injuries.high}});
       $http.post('/query', params)
         .success(function(data) {
           $scope.activeRows = data.activeRows;

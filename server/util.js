@@ -1,6 +1,6 @@
 var _ = require('lodash');
 
-module.exports.getResponse = function(rows, maxRows) {
+module.exports.getResponse = function(rows) {
   var years = [];
   _.forEach(rows, function(row) {
     var date = row.date.substr(0, 4);
@@ -13,6 +13,6 @@ module.exports.getResponse = function(rows, maxRows) {
       year.injuries += row.injuries;
     }
   });
-  return {years: _.sortBy(years, 'year'), activeRows: rows.length, maxRows: maxRows};
+  return {years: _.sortBy(years, 'year'), activeRows: rows.length};
 };
 

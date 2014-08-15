@@ -29,13 +29,13 @@ Make sure you are in the `/server` directory. Then, run `npm install` to downloa
 | injuries | `tuple<int>` | true | An object containing the high and low ends of the injuries range. |
 | source | `string` | false | Which government database to retrieve events from. |
 | investigationType | `string` | false | Whether the event is an incident or an accident. |
+| aircraftCategory | `string` | false | The type of aircraft involved in the event. |
 
 #### Returns
 
 | Node | Type | Description |
 | --- | --- | --- |
 | activeRows | `int` | The number of events that are being used to calculate totals for the graph. |
-| maxRows | `int` | The total number of events in the database. |
 | years | `array<year>` | An array of `year` objects that contains totals for each year. |
 
 ##### `year` Object

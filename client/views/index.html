@@ -20,7 +20,7 @@
 
       <div class="row">
         <div class="col-md-12">
-          <h1 class="header">icarus</h1>
+          <h1 class="header">Icarus</h1>
 
           <h2 class="subheader">An interactive way to view aviation accident data in the United States.</h2>
         </div>
@@ -28,6 +28,18 @@
 
       <div class="row">
         <div class="col-md-2">
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+              <b>Data Utilization</b>
+            </div>
+            <div class="panel-body">
+              <b>{{ activeRows }}</b> of <b>{{ maxRows }}</b> Events Utilized
+              <progressbar class="progress-striped" value="dataUtilization" type="primary">
+                <b>{{ dataUtilization | number:0 }}%</b>
+              </progressbar>
+            </div>
+          </div>
+
           <div class="panel panel-primary controls">
             <div class="panel-heading">
               <b>Controls</b>
@@ -70,28 +82,15 @@
                     translate-range-fn="_.noop">
                   </slider>
                 </div>
+                <div class="form-group">
+                  <label for="aircraftCategorySelect">Aircraft Category</label>
+                  <select id="aircraftCategorySelect" class="form-control" ng-model="params.aircraftCategory"
+                    ng-options="item as (item | titlecase ) for item in distinct.aircraftCategory">
+                    <option selected></option>
+                  </select>
+                </div>
                 <button type="submit" class="btn btn-primary btn-lg btn-submit" ng-click="query(params)">Submit</button>
               </form>
-            </div>
-          </div>
-
-          <div class="panel panel-primary">
-            <div class="panel-heading">
-              <b>Data Utilization</b>
-            </div>
-            <div class="panel-body">
-              <b>{{ activeRows }}</b> of <b>{{ maxRows }}</b> Events Utilized
-              <progressbar class="progress-striped" value="dataUtilization" type="primary">
-                <b>{{ dataUtilization | number:0 }}%</b>
-              </progressbar>
-            </div>
-          </div>
-
-          <div class="panel panel-primary flytenow-ad">
-            <div class="panel-body">
-              <a href="//flytenow.com" target="_blank">
-                <img src="https://flytenow-public.s3.amazonaws.com/flytenow-logo.png" alt="Flytenow"/>
-              </a>
             </div>
           </div>
         </div>

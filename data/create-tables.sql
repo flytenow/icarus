@@ -441,7 +441,7 @@ INSERT INTO `events`
        (IFNULL(`injuries-serious`, 0) + IFNULL(`injuries-minor`, 0))),
     `uninjured`, # uninjured
     UCASE(`aircraft-reg-number`), # aircraft-reg-number
-    WordCase(`aircraft-category`), # aircraft-category
+    WordCase(NULLIF(`aircraft-category`, 'UNKNOWN')), # aircraft-category
     WordCase(`aircraft-make`), # aircraft-make
     UCASE(`aircraft-model`), # aircraft-model
     NULL, # aircraft-series

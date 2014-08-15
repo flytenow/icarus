@@ -60,6 +60,11 @@ app.get('/info', function(request, response) {
     return doQuery('SELECT DISTINCT `injuries` FROM `events` ORDER BY `injuries` DESC', deferred);
   };
 
+  var queryDistinctAircraftCategories = function() {
+    var deferred = q.defer();
+    return doQuery('SELECT DISTINCT `aircraft-category` FROM `events` WHERE `aircraft-category` IS NOT NULL', deferred);
+  };
+
   var info = {distinct: {}, range: {}};
 
   queryCount().then(function(results) {
@@ -78,6 +83,9 @@ app.get('/info', function(request, response) {
       return queryDistinctInjuries();
     }).then(function(results) {
       info.range.injuries = {ceil: results[0].injuries, floor: results[results.length - 2].injuries};
+      return queryDistinctAircraftCategories();
+    }).then(function(results) {
+      info.distinct.aircraftCategory = _.pluck(results, 'aircraft-category');
       response.send(info);
     });
 });
@@ -99,10 +107,15 @@ app.post('/query', function(request, response) {
       query += " AND (`source` = '" + request.body.source + "' OR `source` = 'BOTH')";
     }
 
-    if (request.body.investigationType && request.body.investigationType !== "") {
+    if (request.body.investigationType && request.body.investigationType !== '') {
       query += " AND `investigation-type` = '" + request.body.investigationType + "'";
     }
 
+    if(request.body.aircraftCategory && request.body.aircraftCategory !== '') {
+      query += " AND `aircraft-category` = '" + request.body.aircraftCategory + "'";
+    }
+
+    console.log(query);
     connection.query(query, function(err, rows) {
       if (err) {
         response.status(500);

@@ -4,7 +4,7 @@
 
 ## Build & Run
 
-Make sure you are in the `/server` directory. Then, run `npm install` to download the latest node dependencies. To run the server, just run `node server.js`. Make sure you have set up the database and imported the latest data. Check out the [data README file](https://github.com/flytenow/icarus/blob/master/data/README.md) to see how to do this. 
+Make sure you are in the `/server` directory. Then, run `npm install` to download the latest node dependencies. To run the server, just run `node server.js`. Make sure you have set up the database and imported the latest data. Check out the [data README file](https://github.com/flytenow/icarus/blob/master/data/README.md) to see how to do this.
 
 ## API Documentation
 
@@ -35,7 +35,7 @@ Make sure you are in the `/server` directory. Then, run `npm install` to downloa
 
 | Node | Type | Description |
 | --- | --- | --- |
-| activeRows | `int` | The number of events that are being used to calculate totals for the graph. |
+| activeRows | `int` | The number of events that are not `NULL` for the specified parameters. |
 | years | `array<year>` | An array of `year` objects that contains totals for each year. |
 
 ##### `year` Object

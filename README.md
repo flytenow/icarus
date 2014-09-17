@@ -3,7 +3,7 @@
 > An interactive way to view aviation accident data in the United States.
 
 ## Early Preview
-![Screenshot](https://dl.dropboxusercontent.com/u/47241567/Screenshot%20from%202014-08-13%2011%3A47%3A20.png)
+![Screenshot](https://dl.dropboxusercontent.com/u/47241567/icarus-preview.png)
 
 ## Client
 The client is written using AngularJS as a framework. A control panel is provided that allows the user to specify certain constraints on the data they want to view. The parameters are sent to then sent to the server and the graph is updated with the totals pertaining to the user's query. There is also a data utilization bar that shows how much of the event data could be used to calculate the totals.
